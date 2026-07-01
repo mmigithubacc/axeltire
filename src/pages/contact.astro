@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import Icon from '../components/Icon.astro';
 import { site, hours } from '../data/site';
 
@@ -14,16 +15,10 @@ const contactCards = [
   title="Contact"
   description="Get in touch with Axel Tires in Edmonton — email, hours, and location."
 >
-  <section class="bg-ink text-white">
-    <div class="container-px py-14 sm:py-16">
-      <p class="eyebrow">Contact</p>
-      <h1 class="heading mt-3 text-5xl sm:text-6xl">We answer the phone.</h1>
-      <p class="mt-4 max-w-2xl text-lg text-white/70">
-        Questions about a size, an order, or dealer access? Reach out — same-day
-        replies during business hours.
-      </p>
-    </div>
-  </section>
+  <PageHeader eyebrow="Contact" title="We answer the phone.">
+    Questions about a size, an order, or dealer access? Reach out — same-day
+    replies during business hours.
+  </PageHeader>
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[1fr_360px]">

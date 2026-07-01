@@ -12,7 +12,9 @@ const dark = variant === 'dark';
 <div
   class:list={[
     'rounded-2xl border p-5 sm:p-6',
-    dark ? 'border-white/10 bg-white/5 backdrop-blur' : 'border-black/10 bg-white shadow-sm',
+    dark
+      ? 'border-white/10 bg-ink-soft/85 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl'
+      : 'border-black/10 bg-white shadow-sm',
   ]}
 >
   <div class="flex items-center justify-between gap-3">

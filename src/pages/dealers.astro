@@ -16,15 +16,18 @@ const steps = [
   title="Apply for dealer access"
   description="Wholesale dealer pricing, real-time inventory, and COD via Stripe at order. Apply in about 5 minutes — Edmonton-area tire shops welcome."
 >
-  <section class="bg-ink text-white">
-    <div class="container-px py-14 sm:py-16">
-      <p class="eyebrow">Dealer Portal · /dealer/apply</p>
-      <h1 class="heading mt-3 text-5xl sm:text-6xl">Apply for an account.</h1>
-      <p class="mt-4 max-w-2xl text-lg text-white/70">
+  <section class="grain relative overflow-hidden bg-ink text-white">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="absolute -right-16 -top-24 h-80 w-80 rounded-full bg-brand/20 blur-[100px]"></div>
+    </div>
+    <div class="container-px relative py-16 sm:py-20">
+      <p class="reveal eyebrow">Dealer Portal · /dealer/apply</p>
+      <h1 class="reveal heading mt-3 text-5xl sm:text-6xl" style="transition-delay: 60ms;">Apply for an account.</h1>
+      <p class="reveal mt-4 max-w-2xl text-lg text-white/70" style="transition-delay: 120ms;">
         Tell us about your business. Most applications get a decision within 1–2
         business days. All accounts are COD via Stripe at v1 — no invoicing, no Net-30.
       </p>
-      <dl class="mt-8 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
+      <dl class="reveal mt-8 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4" style="transition-delay: 180ms;">
         {
           dealerStats.map((stat) => (
             <div class="rounded-xl border border-white/10 bg-white/5 p-4">

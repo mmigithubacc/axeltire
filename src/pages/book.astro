@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
 
@@ -39,16 +40,10 @@ const mailto = `mailto:${site.email}?subject=${mailSubject}&body=${mailBody}`;
   title="Book install"
   description="Book a tire install in Edmonton. Walk-ins accepted, booked appointments cut the wait — average 48 min on a 4-tire job."
 >
-  <section class="bg-ink text-white">
-    <div class="container-px py-14 sm:py-16">
-      <p class="eyebrow">Book install</p>
-      <h1 class="heading mt-3 text-5xl sm:text-6xl">Pick a time.</h1>
-      <p class="mt-4 max-w-2xl text-lg text-white/70">
-        Walk-ins accepted. Booked appointments cut the wait — average 48 min on a
-        4-tire job.
-      </p>
-    </div>
-  </section>
+  <PageHeader eyebrow="Book install" title="Pick a time.">
+    Walk-ins accepted. Booked appointments cut the wait — average 48 min on a
+    4-tire job.
+  </PageHeader>
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[1fr_360px]">

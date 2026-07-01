@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import ProductCard from '../components/ProductCard.astro';
 import SizeFinder from '../components/SizeFinder.astro';
 import { products } from '../data/products';
@@ -12,17 +13,10 @@ const seasons = ['All', ...new Set(products.map((p) => p.season))];
   title="Shop tires"
   description="Browse live Edmonton tire inventory with all-in pricing — tire, install, balance and disposal in one number."
 >
-  <!-- Page header -->
-  <section class="bg-ink text-white">
-    <div class="container-px py-14 sm:py-16">
-      <p class="eyebrow">Live · Edmonton stock</p>
-      <h1 class="heading mt-3 text-5xl sm:text-6xl">Shop tires.</h1>
-      <p class="mt-4 max-w-2xl text-lg text-white/70">
-        Every price is all-in — tire, install, balance and disposal. What you see is
-        on our floor right now.
-      </p>
-    </div>
-  </section>
+  <PageHeader eyebrow="Live · Edmonton stock" title="Shop tires.">
+    Every price is all-in — tire, install, balance and disposal. What you see is
+    on our floor right now.
+  </PageHeader>
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[300px_1fr]">
@@ -55,8 +49,8 @@ const seasons = ['All', ...new Set(products.map((p) => p.season))];
         </p>
         <div id="product-grid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {
-            products.map((product) => (
-              <div class="product-item" data-size={product.size.toLowerCase()} data-season={product.season}>
+            products.map((product, i) => (
+              <div class="product-item reveal" style={`transition-delay: ${(i % 3) * 70}ms;`} data-size={product.size.toLowerCase()} data-season={product.season}>
                 <ProductCard product={product} />
               </div>
             ))

@@ -33,25 +33,91 @@ body {
   @apply bg-white text-ink font-sans antialiased;
 }
 
+/* ---- Motion ---------------------------------------------------------- */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 24s linear infinite;
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Scroll-reveal — elements fade + rise into view. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-slow,
+  .animate-float {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Fine grain texture overlay for dark sections. */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
 /* Reusable component classes */
 @layer components {
   .btn,
   .btn-primary,
   .btn-outline,
   .btn-dark {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-6 py-3
-      font-semibold tracking-wide transition-colors duration-200
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-6 py-3
+      font-semibold tracking-wide transition-all duration-200 ease-out
       focus:outline-none focus-visible:ring-2 focus-visible:ring-brand
       focus-visible:ring-offset-2;
   }
   .btn-primary {
-    @apply bg-brand text-white hover:bg-brand-dark;
+    @apply bg-brand text-white shadow-lg shadow-brand/25
+      hover:-translate-y-0.5 hover:bg-brand-dark hover:shadow-xl hover:shadow-brand/30;
   }
   .btn-outline {
-    @apply border-2 border-white/80 text-white hover:bg-white hover:text-ink;
+    @apply border border-white/25 bg-white/5 text-white backdrop-blur
+      hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/10;
   }
   .btn-dark {
-    @apply bg-ink text-white hover:bg-ink-soft;
+    @apply bg-ink text-white hover:-translate-y-0.5 hover:bg-ink-soft hover:shadow-lg;
   }
   .container-px {
     @apply mx-auto w-full max-w-6xl px-5 sm:px-8;

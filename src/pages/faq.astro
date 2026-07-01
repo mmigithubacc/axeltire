@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
 import { site } from '../data/site';
 
 const faqs: { q: string; a: string; id?: string }[] = [
@@ -39,16 +40,10 @@ const faqs: { q: string; a: string; id?: string }[] = [
   title="FAQ"
   description="Answers about all-in pricing, live inventory, install times, warranty and the dealer program at Axel Tires."
 >
-  <section class="bg-ink text-white">
-    <div class="container-px py-14 sm:py-16">
-      <p class="eyebrow">Help</p>
-      <h1 class="heading mt-3 text-5xl sm:text-6xl">FAQ.</h1>
-      <p class="mt-4 max-w-2xl text-lg text-white/70">
-        Straight answers. Can’t find yours? Email
-        <a href={`mailto:${site.email}`} class="font-semibold text-brand-light">{site.email}</a>.
-      </p>
-    </div>
-  </section>
+  <PageHeader eyebrow="Help" title="FAQ.">
+    Straight answers. Can’t find yours? Email
+    <a href={`mailto:${site.email}`} class="font-semibold text-brand-light">{site.email}</a>.
+  </PageHeader>
 
   <section class="section bg-white">
     <div class="container-px max-w-3xl">

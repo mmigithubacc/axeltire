@@ -8,16 +8,19 @@ import { valueProps, site } from '../data/site';
   title="About"
   description="Axel Tires is an owner-operated, family-run wholesale and retail tire shop in Edmonton. All-in pricing, real-time inventory, no upsells."
 >
-  <section class="bg-ink text-white">
-    <div class="container-px py-14 sm:py-16">
-      <p class="eyebrow">About</p>
-      <h1 class="heading mt-3 text-5xl sm:text-6xl">Honest tires,<br />built in Edmonton.</h1>
-      <p class="mt-5 max-w-2xl text-lg leading-relaxed text-white/70">
+  <section class="grain relative overflow-hidden bg-ink text-white">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="absolute -right-16 -top-24 h-80 w-80 rounded-full bg-brand/20 blur-[100px]"></div>
+    </div>
+    <div class="container-px relative py-16 sm:py-20">
+      <p class="reveal eyebrow">About</p>
+      <h1 class="reveal heading mt-3 text-5xl sm:text-6xl" style="transition-delay: 60ms;">Honest tires,<br />built in Edmonton.</h1>
+      <p class="reveal mt-5 max-w-2xl text-lg leading-relaxed text-white/70" style="transition-delay: 120ms;">
         We built Axel Tires because every other tire shop in {site.city} makes you wait
         on hold to learn whether they have your size — then upsells you a brake job.
         Not us.
       </p>
-      <p class="mt-4 text-sm font-semibold uppercase tracking-widest text-brand-light">
+      <p class="reveal mt-4 text-sm font-semibold uppercase tracking-widest text-brand-light" style="transition-delay: 180ms;">
         {site.city}, {site.province} · Est. {site.established} · Family-owned
       </p>
     </div>
