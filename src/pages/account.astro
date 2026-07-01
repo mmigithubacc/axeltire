@@ -83,16 +83,20 @@ import { site } from '../data/site';
       if (data.session) return showAccount();
       authForm.classList.remove('hidden');
 
-      $('auth-toggle').addEventListener('click', () => {
-        mode = mode === 'signin' ? 'signup' : 'signin';
-        const up = mode === 'signup';
+      const setMode = (m: 'signin' | 'signup') => {
+        mode = m;
+        const up = m === 'signup';
         $('auth-title').textContent = up ? 'Create account' : 'Sign in';
         ($('auth-submit') as HTMLButtonElement).textContent = up ? 'Create account' : 'Sign in';
         $('auth-toggle-text').textContent = up ? 'Already have an account?' : 'New here?';
         ($('auth-toggle') as HTMLElement).textContent = up ? 'Sign in' : 'Create account';
         $('auth-error').classList.add('hidden');
         $('auth-ok').classList.add('hidden');
-      });
+      };
+      $('auth-toggle').addEventListener('click', () => setMode(mode === 'signin' ? 'signup' : 'signin'));
+
+      // Guests arriving to place an order start on Create account.
+      if (params.get('reason') === 'order') setMode('signup');
 
       authForm.addEventListener('submit', async (e) => {
         e.preventDefault();

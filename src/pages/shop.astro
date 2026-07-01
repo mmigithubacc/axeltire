@@ -468,11 +468,24 @@ const flagsOf = (p: (typeof products)[number]) =>
       renderBar();
     }
 
+    // Guests must have an account before building an order — send them to
+    // sign up on the first "Add to order" click.
+    async function requireAccount(): Promise<boolean> {
+      if (!supabase) return true; // no backend configured → email fallback flow
+      const { data } = await supabase.auth.getSession();
+      if (data.session) return true;
+      location.href = '/account?reason=order&next=/shop';
+      return false;
+    }
+
     // Event delegation for add / stepper.
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
       const t = e.target as HTMLElement;
       const add = t.closest<HTMLElement>('.add-btn');
-      if (add) return addToOrder(add.dataset.id!);
+      if (add) {
+        if (await requireAccount()) addToOrder(add.dataset.id!);
+        return;
+      }
       const s = t.closest<HTMLElement>('.step');
       if (s) return step(s.dataset.id!, +s.dataset.step!);
     });
