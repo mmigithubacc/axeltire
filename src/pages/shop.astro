@@ -34,12 +34,12 @@ const flagsOf = (p: (typeof products)[number]) =>
 
 <Layout
   title={`Shop Tires in ${site.city} — Search ${products.length}+ Sizes In Stock`}
-  description={`Search ${site.city} tire inventory by size (e.g. 2055516) or brand. All-in pricing from $${minPrice}, live stock, and add-to-order. Delivery on ${delivery.minTires}+ tires.`}
+  description={`Search ${site.city} tire inventory by size (e.g. 2055516) or brand. Honest pricing from $${minPrice}, live stock, and add-to-order. Delivery on ${delivery.minTires}+ tires.`}
 >
   <PageHeader eyebrow="Live · Edmonton stock" title="Search & order tires.">
     Type your size (e.g. <span class="font-mono">2055516</span>) or a brand,
-    filter, and add to your order. Every price is all-in — tire, install,
-    balance &amp; disposal. Get {delivery.minTires}+ delivered in {site.city}.
+    filter, and add to your order. Honest tire prices — no hidden fees.
+    Get {delivery.minTires}+ delivered anywhere in {site.city}.
   </PageHeader>
 
   <Breadcrumbs items={[{ label: 'Shop tires', href: '/shop' }]} />
@@ -186,7 +186,7 @@ const flagsOf = (p: (typeof products)[number]) =>
                   <span class="font-display text-2xl font-bold text-ink">${p.price}</span>
                   <span class="ml-1 text-xs text-steel line-through">${p.msrp}</span>
                   <span class="block text-[11px] font-semibold text-emerald-600">
-                    all-in · save ${p.msrp - p.price}
+                    save ${p.msrp - p.price}
                   </span>
                 </div>
 
@@ -456,20 +456,30 @@ const flagsOf = (p: (typeof products)[number]) =>
     requestBtn.addEventListener('click', () => {
       const items = Object.values(order);
       if (!items.length) return;
-      const lines = items.map((i) => `• ${i.qty}× ${i.name} (${i.sku}) — $${i.price} all-in ea.`);
+      const lines = items.map((i) => `• ${i.qty}× ${i.name} (${i.sku}) — $${i.price} ea.`);
       const total = items.reduce((n, i) => n + i.qty * i.price, 0);
+      // Save a local order record so the customer can track it on /track.
+      const ref = 'AX-' + String(Date.now()).slice(-6);
+      try {
+        const hist = JSON.parse(localStorage.getItem('axel-orders') || '[]');
+        hist.unshift({ ref, date: new Date().toISOString(), items, total, status: 'Requested' });
+        localStorage.setItem('axel-orders', JSON.stringify(hist.slice(0, 50)));
+      } catch {}
+
       const body = [
+        `Order reference: ${ref}`,
+        '',
         'I’d like to order the following tires:',
         '',
         ...lines,
         '',
-        `Subtotal (all-in): $${total}`,
+        `Subtotal: $${total}`,
         '',
         'Name:',
         'Phone:',
         'Pickup or delivery (2+ tires, Edmonton):',
       ].join('\n');
-      location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Tire order request')}&body=${encodeURIComponent(body)}`;
+      location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Tire order request ' + ref)}&body=${encodeURIComponent(body)}`;
     });
 
     // Hydrate existing order on load.

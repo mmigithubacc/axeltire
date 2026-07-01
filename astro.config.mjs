@@ -7,6 +7,10 @@ import sitemap from '@astrojs/sitemap';
 // sitemap/canonical URLs and absolute Open Graph links).
 export default defineConfig({
   site: 'https://www.axeltire.ca',
+  // /book was retired (no installation service) — send any old links to shop.
+  redirects: {
+    '/book': '/shop',
+  },
   integrations: [sitemap()],
   vite: {
     plugins: [tailwindcss()],

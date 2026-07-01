@@ -19,7 +19,7 @@ export type Product = {
   season: Season;
   loadIndex: string;
   speedRating: string;
-  price: number; // Axel all-in price (CAD)
+  price: number; // Axel retail price (CAD)
   msrp: number; // suggested retail, used to show savings
   stock: number; // units on hand; 0 = call for availability
   bestSeller?: boolean;

@@ -9,7 +9,7 @@ export const site = {
   name: 'Axel Tires',
   tagline: 'Honest tires. No upsells.',
   description:
-    'Wholesale and retail tires in Edmonton. The price you see covers tire, install, balance and disposal — that’s it.',
+    'Wholesale and retail tires in Edmonton — the price you see is the tire price, with no hidden fees. Delivered on 2+ tires.',
   url: 'https://www.axeltire.ca',
   email: 'hello@axeltire.ca',
   currency: 'CAD',
@@ -29,14 +29,14 @@ export const delivery = {
   area: 'Edmonton',
   short: 'Tire delivery in Edmonton — 2-tire minimum',
   blurb:
-    'Order 2 or more tires and we’ll deliver to any address in Edmonton. Same all-in pricing, brought to your door.',
+    'Order 2 or more tires and we’ll deliver to any address in Edmonton. Same honest price, brought to your door.',
 } as const;
 
 /** Rotating messages shown in the announcement bar. */
 export const announcements = [
   '750 tires in stock — Edmonton',
   'Delivery in Edmonton · 2-tire minimum',
-  'Free install on 4',
+  'No hidden fees',
   'Wholesale dealers welcome',
 ] as const;
 
@@ -70,16 +70,16 @@ export const areaServed = [
 /** Primary navigation. */
 export const nav = [
   { label: 'Shop tires', href: '/shop' },
-  { label: 'Book install', href: '/book' },
   { label: 'Dealers', href: '/dealers' },
+  { label: 'Contact', href: '/contact' },
 ] as const;
 
 /** The four Axel promise value props. */
 export const valueProps = [
   {
-    title: 'All-in pricing',
+    title: 'Honest pricing',
     body:
-      'Tire + install + balance + disposal in one number. No add-ons at the counter, no inspection upcharges.',
+      'The price you see is the tire price — no hidden fees and no upsells, ever.',
     icon: 'tag',
   },
   {
@@ -91,14 +91,14 @@ export const valueProps = [
   {
     title: 'Wholesale + retail',
     body:
-      'Same shop, both sides. Dealers get tier pricing automatically — apply once, paid via Stripe at order.',
+      'Same warehouse, both sides. Dealers get tier pricing automatically — apply once, paid via Stripe at order.',
     icon: 'building',
   },
   {
-    title: 'Edmonton-built',
+    title: 'Edmonton delivery',
     body:
-      'Owner-operated. Family-run. We answer the phone. We are the people putting tires on your car.',
-    icon: 'pin',
+      'Order 2+ tires and we bring them to any address in Edmonton. Same honest price, to your door.',
+    icon: 'truck',
   },
 ] as const;
 
@@ -126,12 +126,12 @@ export const dealerStats = [
 export const footerLinks = {
   Shop: [
     { label: 'Tires', href: '/shop' },
-    { label: 'Book install', href: '/book' },
+    { label: 'Delivery', href: '/faq#delivery' },
     { label: 'Wheels (soon)', href: '#' },
     { label: 'Dealers', href: '/dealers' },
   ],
   Service: [
-    { label: 'Track an order', href: '#' },
+    { label: 'Track an order', href: '/track' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Warranty', href: '/faq#warranty' },
     { label: 'Contact', href: '/contact' },

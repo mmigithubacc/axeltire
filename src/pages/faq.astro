@@ -6,12 +6,16 @@ import { site, delivery } from '../data/site';
 
 const faqs: { q: string; a: string; id?: string }[] = [
   {
-    q: 'What does “all-in pricing” mean?',
-    a: 'The price on the catalog covers the tire, installation, balancing and disposal (including ARMA). No add-ons at the counter, no inspection upcharges.',
+    q: 'Is the listed price the final price?',
+    a: 'Yes — the price you see is the tire price, with no hidden fees and no upsells. We’re a tire supplier, so there are no surprise labour or shop charges.',
+  },
+  {
+    q: 'Do you install tires?',
+    a: 'No — Axel is a tire supplier (wholesale and retail). We get you the right tires at honest prices and deliver them in Edmonton; you can have them installed at your preferred shop.',
   },
   {
     q: 'Do you deliver tires in Edmonton?',
-    a: `Yes. Order ${delivery.minTires} or more tires and we’ll deliver to any address in ${delivery.area}. You pay the same all-in price you see on the catalog — no counter surprises.`,
+    a: `Yes. Order ${delivery.minTires} or more tires and we’ll deliver to any address in ${delivery.area}. You pay the same honest price you see on the catalog — no surprises.`,
     id: 'delivery',
   },
   {
@@ -19,16 +23,12 @@ const faqs: { q: string; a: string; id?: string }[] = [
     a: 'Yes. What you see is what is physically on our floor, updated the moment a tire moves. If it says in stock, it’s here.',
   },
   {
-    q: 'Do I need an appointment?',
-    a: 'Walk-ins are always accepted. Booking ahead cuts the wait — a 4-tire job averages about 48 minutes.',
+    q: 'How do I get my tires — pickup or delivery?',
+    a: `Order online and choose pickup in Edmonton, or delivery for ${delivery.minTires} or more tires to any Edmonton address.`,
   },
   {
     q: 'Where are you located?',
     a: 'We’re in Edmonton, AB. The exact warehouse address is coming soon — email us and we’ll point you in.',
-  },
-  {
-    q: 'Can I buy just the tires without install?',
-    a: 'Yes, tire-only is fine. And we won’t pitch you a brake job you don’t need.',
   },
   {
     q: 'How does the dealer program work?',
@@ -54,8 +54,8 @@ const faqSchema = {
 ---
 
 <Layout
-  title="Tire FAQ — All-In Pricing, Delivery & Warranty"
-  description={`Answers on all-in pricing, ${site.city} tire delivery, live inventory, install times, warranty and the dealer program at ${site.name}.`}
+  title="Tire FAQ — Honest Pricing, Delivery & Warranty"
+  description={`Answers on honest pricing, ${site.city} tire delivery, live inventory, pickup, warranty and the dealer program at ${site.name}.`}
 >
   <PageHeader eyebrow="Help" title="FAQ.">
     Straight answers. Can’t find yours? Email
