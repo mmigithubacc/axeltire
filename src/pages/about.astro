@@ -1,0 +1,71 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { valueProps, site } from '../data/site';
+---
+
+<Layout
+  title="About"
+  description="Axel Tires is an owner-operated, family-run wholesale and retail tire shop in Edmonton. All-in pricing, real-time inventory, no upsells."
+>
+  <section class="bg-ink text-white">
+    <div class="container-px py-14 sm:py-16">
+      <p class="eyebrow">About</p>
+      <h1 class="heading mt-3 text-5xl sm:text-6xl">Honest tires,<br />built in Edmonton.</h1>
+      <p class="mt-5 max-w-2xl text-lg leading-relaxed text-white/70">
+        We built Axel Tires because every other tire shop in {site.city} makes you wait
+        on hold to learn whether they have your size — then upsells you a brake job.
+        Not us.
+      </p>
+      <p class="mt-4 text-sm font-semibold uppercase tracking-widest text-brand-light">
+        {site.city}, {site.province} · Est. {site.established} · Family-owned
+      </p>
+    </div>
+  </section>
+
+  <section class="section bg-white">
+    <div class="container-px grid gap-12 lg:grid-cols-2 lg:items-start">
+      <div class="prose-tire">
+        <h2 class="heading text-3xl text-ink">Why we exist</h2>
+        <p class="mt-4 leading-relaxed text-steel">
+          Buying tires is one of the most opaque purchases people make. Prices change
+          at the counter, “install” hides four extra fees, and nobody can tell you if
+          your size is even in the building. We flipped that around.
+        </p>
+        <p class="mt-4 leading-relaxed text-steel">
+          The price you see on our catalog is the price you pay — tire, install,
+          balance and disposal, all in. Our inventory is live, so “in stock” means
+          it’s physically on our floor. And we run wholesale and retail out of the
+          same warehouse, which keeps our pricing sharp for everyone.
+        </p>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        {
+          valueProps.map((prop) => (
+            <div class="rounded-xl border border-black/10 bg-mist p-5">
+              <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white">
+                <Icon name={prop.icon} class="h-5 w-5" />
+              </span>
+              <h3 class="heading mt-3 text-lg">{prop.title}</h3>
+              <p class="mt-1.5 text-sm leading-relaxed text-steel">{prop.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-ink text-white">
+    <div class="container-px text-center">
+      <h2 class="heading text-4xl sm:text-5xl">Ready when you are.</h2>
+      <p class="mx-auto mt-4 max-w-xl text-lg text-white/70">
+        Shop live Edmonton stock or book an install — walk-ins always welcome.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/shop" class="btn-primary">Shop tires</a>
+        <a href="/book" class="btn-outline">Book install</a>
+      </div>
+    </div>
+  </section>
+</Layout>

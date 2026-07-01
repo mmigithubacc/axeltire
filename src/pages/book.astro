@@ -1,0 +1,148 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+
+const steps = [
+  { n: '01', label: 'Pick a day' },
+  { n: '02', label: 'Pick a time' },
+  { n: '03', label: 'Your details' },
+];
+
+const infoCards = [
+  {
+    title: 'Edmonton',
+    body: 'Edmonton, AB — exact address coming soon',
+    icon: 'pin',
+  },
+  {
+    title: 'All-in price',
+    body: 'Install + balance + disposal + ARMA already in the price you saw on the catalog.',
+    icon: 'tag',
+  },
+  {
+    title: 'Tire-only',
+    body: 'We don’t pitch brake jobs you don’t need.',
+    icon: 'check',
+  },
+];
+
+// Prefill the fallback email so the mailto is ready to send.
+const mailSubject = encodeURIComponent('Install booking request');
+const mailBody = encodeURIComponent(
+  'Name:\nPhone:\nVehicle (year / make / model):\nTire size:\nPreferred day:\nPreferred time:\nNotes:',
+);
+const mailto = `mailto:${site.email}?subject=${mailSubject}&body=${mailBody}`;
+---
+
+<Layout
+  title="Book install"
+  description="Book a tire install in Edmonton. Walk-ins accepted, booked appointments cut the wait — average 48 min on a 4-tire job."
+>
+  <section class="bg-ink text-white">
+    <div class="container-px py-14 sm:py-16">
+      <p class="eyebrow">Book install</p>
+      <h1 class="heading mt-3 text-5xl sm:text-6xl">Pick a time.</h1>
+      <p class="mt-4 max-w-2xl text-lg text-white/70">
+        Walk-ins accepted. Booked appointments cut the wait — average 48 min on a
+        4-tire job.
+      </p>
+    </div>
+  </section>
+
+  <section class="section bg-mist">
+    <div class="container-px grid gap-8 lg:grid-cols-[1fr_360px]">
+      <!-- Booking flow -->
+      <div class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8">
+        <ol class="grid gap-4 sm:grid-cols-3">
+          {
+            steps.map((step) => (
+              <li class="rounded-xl border border-black/10 bg-mist p-5">
+                <span class="font-display text-2xl font-bold text-brand">{step.n}</span>
+                <span class="mt-1 block text-xs uppercase tracking-widest text-steel">/ Step</span>
+                <p class="mt-2 font-semibold text-ink">{step.label}</p>
+              </li>
+            ))
+          }
+        </ol>
+
+        <div class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm leading-relaxed text-amber-900">
+          <span class="mr-1">📌</span>
+          <strong>Heads up:</strong> live online booking is opening soon. For now we email
+          <a href={mailto} class="font-semibold underline decoration-amber-500 underline-offset-2">
+            {site.email}</a> with your details — same-day reply, we’ll text to confirm.
+        </div>
+
+        <!-- Fallback booking form (composes an email) -->
+        <form class="mt-6 grid gap-4 sm:grid-cols-2" id="book-form" data-email={site.email}>
+          <label class="block">
+            <span class="text-sm font-semibold text-ink">Your name</span>
+            <input name="name" required class="form-field" placeholder="Jane Driver" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-ink">Phone</span>
+            <input name="phone" type="tel" required class="form-field" placeholder="(780) 000-0000" />
+          </label>
+          <label class="block sm:col-span-2">
+            <span class="text-sm font-semibold text-ink">Vehicle</span>
+            <input name="vehicle" class="form-field" placeholder="2019 Toyota RAV4" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-ink">Tire size</span>
+            <input name="size" class="form-field" placeholder="225/65R17" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-semibold text-ink">Preferred day</span>
+            <input name="day" type="date" class="form-field" />
+          </label>
+          <label class="block sm:col-span-2">
+            <span class="text-sm font-semibold text-ink">Notes</span>
+            <textarea name="notes" rows="3" class="form-field" placeholder="Anything we should know?"></textarea>
+          </label>
+          <button type="submit" class="btn-primary sm:col-span-2">
+            <Icon name="mail" class="h-5 w-5" />
+            Send booking request
+          </button>
+        </form>
+      </div>
+
+      <!-- Side info -->
+      <aside class="space-y-4">
+        {
+          infoCards.map((card) => (
+            <div class="rounded-2xl border border-black/10 bg-white p-6">
+              <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                <Icon name={card.icon} class="h-5 w-5" />
+              </span>
+              <h2 class="heading mt-3 text-lg">{card.title}</h2>
+              <p class="mt-1.5 text-sm leading-relaxed text-steel">{card.body}</p>
+            </div>
+          ))
+        }
+        <a href="/shop" class="flex items-center justify-between rounded-2xl border border-black/10 bg-ink p-6 text-white transition-colors hover:bg-ink-soft">
+          <span class="font-semibold">Browsing tires? See what’s in stock</span>
+          <Icon name="arrow" class="h-5 w-5 text-brand-light" />
+        </a>
+      </aside>
+    </div>
+  </section>
+
+  <script>
+    // Compose a prefilled email from the booking form (no backend needed yet).
+    const form = document.getElementById('book-form') as HTMLFormElement | null;
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = form.dataset.email;
+      const f = new FormData(form);
+      const body = [
+        `Name: ${f.get('name') || ''}`,
+        `Phone: ${f.get('phone') || ''}`,
+        `Vehicle: ${f.get('vehicle') || ''}`,
+        `Tire size: ${f.get('size') || ''}`,
+        `Preferred day: ${f.get('day') || ''}`,
+        `Notes: ${f.get('notes') || ''}`,
+      ].join('\n');
+      location.href = `mailto:${email}?subject=${encodeURIComponent('Install booking request')}&body=${encodeURIComponent(body)}`;
+    });
+  </script>
+</Layout>

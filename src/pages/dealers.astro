@@ -1,0 +1,170 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { dealerStats } from '../data/site';
+
+const dealerEmail = 'dealers@axeltire.ca';
+
+const steps = [
+  { n: '1', title: 'You apply', body: 'Tell us about your shop, volume, and contact info — about 5 minutes.' },
+  { n: '2', title: 'We review', body: '1–2 business days. We’ll email if we need anything else.' },
+  { n: '3', title: 'You’re in', body: 'Tier assigned, dashboard live, place your first order at COD via Stripe.' },
+];
+---
+
+<Layout
+  title="Apply for dealer access"
+  description="Wholesale dealer pricing, real-time inventory, and COD via Stripe at order. Apply in about 5 minutes — Edmonton-area tire shops welcome."
+>
+  <section class="bg-ink text-white">
+    <div class="container-px py-14 sm:py-16">
+      <p class="eyebrow">Dealer Portal · /dealer/apply</p>
+      <h1 class="heading mt-3 text-5xl sm:text-6xl">Apply for an account.</h1>
+      <p class="mt-4 max-w-2xl text-lg text-white/70">
+        Tell us about your business. Most applications get a decision within 1–2
+        business days. All accounts are COD via Stripe at v1 — no invoicing, no Net-30.
+      </p>
+      <dl class="mt-8 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
+        {
+          dealerStats.map((stat) => (
+            <div class="rounded-xl border border-white/10 bg-white/5 p-4">
+              <dt class="font-display text-2xl font-bold text-brand-light">{stat.value}</dt>
+              <dd class="mt-0.5 text-xs font-medium text-white/60">{stat.label}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section class="section bg-mist">
+    <div class="container-px grid gap-8 lg:grid-cols-[1fr_340px]">
+      <!-- Application form -->
+      <form class="rounded-2xl border border-black/10 bg-white p-6 sm:p-8" id="dealer-form" data-email={dealerEmail}>
+        <fieldset class="border-0 p-0">
+          <legend class="heading text-xl text-ink">Business details</legend>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-semibold text-ink">Business name<span class="text-brand">*</span></span>
+              <input name="business" required class="form-field" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Legal name (if different)</span>
+              <input name="legal" class="form-field" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Business number (CRA)</span>
+              <input name="cra" class="form-field" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="mt-8 border-0 p-0">
+          <legend class="heading text-xl text-ink">Contact</legend>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Contact name<span class="text-brand">*</span></span>
+              <input name="contact" required class="form-field" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Contact email<span class="text-brand">*</span></span>
+              <input name="email" type="email" required class="form-field" />
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-semibold text-ink">Phone</span>
+              <input name="phone" type="tel" class="form-field" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="mt-8 border-0 p-0">
+          <legend class="heading text-xl text-ink">Location</legend>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-semibold text-ink">Street address</span>
+              <input name="street" class="form-field" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">City</span>
+              <input name="city" class="form-field" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Province</span>
+              <input name="province" class="form-field" value="AB" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Postal code</span>
+              <input name="postal" class="form-field" />
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="mt-8 border-0 p-0">
+          <legend class="heading text-xl text-ink">Volume + access</legend>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Estimated monthly volume (CAD)</span>
+              <input name="volume" inputmode="numeric" class="form-field" placeholder="$" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-semibold text-ink">Account password (min 8 chars)<span class="text-brand">*</span></span>
+              <input name="password" type="password" minlength="8" required class="form-field" />
+            </label>
+            <label class="block sm:col-span-2">
+              <span class="text-sm font-semibold text-ink">Notes (optional)</span>
+              <textarea name="notes" rows="3" class="form-field"></textarea>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="btn-primary mt-8 w-full sm:w-auto">
+          <Icon name="check" class="h-5 w-5" />
+          Submit application
+        </button>
+        <p class="mt-4 text-sm text-steel">
+          Already applied? <a href="/contact" class="font-semibold text-brand">Sign in →</a>
+          &nbsp;·&nbsp; Questions? Email
+          <a href={`mailto:${dealerEmail}`} class="font-semibold text-brand">{dealerEmail}</a>.
+        </p>
+      </form>
+
+      <!-- What happens next -->
+      <aside class="lg:sticky lg:top-28 lg:self-start">
+        <div class="rounded-2xl border border-black/10 bg-white p-6">
+          <h2 class="heading text-xl text-ink">What happens next</h2>
+          <ol class="mt-5 space-y-5">
+            {
+              steps.map((step) => (
+                <li class="flex gap-4">
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand font-display font-bold text-white">
+                    {step.n}
+                  </span>
+                  <div>
+                    <p class="font-semibold text-ink">{step.title}</p>
+                    <p class="mt-0.5 text-sm leading-relaxed text-steel">{step.body}</p>
+                  </div>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <script>
+    // Until the dealer backend is live, the form composes an application email.
+    const form = document.getElementById('dealer-form') as HTMLFormElement | null;
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = form.dataset.email;
+      const f = new FormData(form);
+      const lines: string[] = [];
+      for (const [k, v] of f.entries()) {
+        if (k === 'password') continue; // never email the password
+        lines.push(`${k}: ${v}`);
+      }
+      location.href = `mailto:${email}?subject=${encodeURIComponent('Dealer account application')}&body=${encodeURIComponent(lines.join('\n'))}`;
+    });
+  </script>
+</Layout>
