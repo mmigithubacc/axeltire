@@ -1,0 +1,77 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  /** Dark hero variant vs. light on-page variant. */
+  variant?: 'dark' | 'light';
+}
+const { variant = 'light' } = Astro.props;
+const dark = variant === 'dark';
+---
+
+<div
+  class:list={[
+    'rounded-2xl border p-5 sm:p-6',
+    dark
+      ? 'border-white/10 bg-ink-soft/85 shadow-2xl shadow-black/60 ring-1 ring-white/5 backdrop-blur-xl'
+      : 'border-black/10 bg-white shadow-sm',
+  ]}
+>
+  <div class="flex items-center justify-between gap-3">
+    <h2 class:list={['heading text-2xl', dark ? 'text-white' : 'text-ink']}>Find my tires</h2>
+    <span class="rounded-full bg-brand/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-brand">
+      Live stock
+    </span>
+  </div>
+
+  <!-- Vehicle finder (offline) -->
+  <div class="mt-4 grid grid-cols-3 gap-2" aria-hidden="false">
+    {
+      ['Make', 'Model', 'Year'].map((label) => (
+        <select
+          disabled
+          aria-label={label}
+          class:list={[
+            'cursor-not-allowed rounded-md border px-3 py-2.5 text-sm opacity-60',
+            dark ? 'border-white/15 bg-white/10 text-white/60' : 'border-black/10 bg-mist text-steel',
+          ]}
+        >
+          <option>{label}</option>
+        </select>
+      ))
+    }
+  </div>
+
+  <div class="my-3 flex items-center gap-3">
+    <span class:list={['h-px flex-1', dark ? 'bg-white/15' : 'bg-black/10']}></span>
+    <span class:list={['text-xs font-semibold uppercase tracking-widest', dark ? 'text-white/50' : 'text-steel']}>
+      Or by size
+    </span>
+    <span class:list={['h-px flex-1', dark ? 'bg-white/15' : 'bg-black/10']}></span>
+  </div>
+
+  <!-- Size search -->
+  <form action="/shop" method="get" class="flex gap-2">
+    <div class="relative flex-1">
+      <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+        <Icon name="search" class:list={['h-4 w-4', dark ? 'text-white/50' : 'text-steel']} />
+      </span>
+      <input
+        type="text"
+        name="size"
+        inputmode="text"
+        placeholder="e.g. 225/65R17"
+        class:list={[
+          'w-full rounded-md border py-2.5 pl-9 pr-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30',
+          dark ? 'border-white/15 bg-white/10 text-white placeholder:text-white/40' : 'border-black/10 bg-white text-ink placeholder:text-steel',
+        ]}
+      />
+    </div>
+    <button type="submit" class="btn-primary px-5 py-2.5 text-sm">Search</button>
+  </form>
+
+  <p class:list={['mt-3 text-xs leading-relaxed', dark ? 'text-white/50' : 'text-steel']}>
+    Vehicle finder is offline — search by tire size instead (find the size on your
+    sidewall, e.g. <span class="font-mono">225/65R17</span>).
+  </p>
+</div>

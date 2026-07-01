@@ -1,0 +1,42 @@
+---
+import { site, footerLinks } from '../data/site';
+import Logo from './Logo.astro';
+
+const year = 2026; // Est. 2026 — bump when the copyright year changes.
+const columns = Object.entries(footerLinks);
+---
+
+<footer class="border-t border-black/10 bg-cream text-ink">
+  <div class="container-px grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <div class="max-w-xs">
+      <a href="/" aria-label={`${site.name} home`}>
+        <Logo tone="light" />
+      </a>
+      <p class="mt-6 font-mono text-sm leading-relaxed text-slate-muted">{site.description}</p>
+    </div>
+
+    {
+      columns.map(([title, items]) => (
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-[0.2em] text-slate-muted">{title}</h2>
+          <ul class="mt-5 space-y-3 text-sm">
+            {items.map((item) => (
+              <li>
+                <a href={item.href} class="text-ink transition-colors hover:text-brand">
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="border-t border-black/10">
+    <div class="container-px flex flex-col gap-2 py-6 font-mono text-xs text-slate-muted sm:flex-row sm:items-center sm:justify-between">
+      <p>© {year} {site.name} · {site.city}, {site.province}</p>
+      <a href={`mailto:${site.email}`} class="hover:text-brand">{site.email}</a>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,60 @@
+---
+import type { Product } from '../data/products';
+import { formatStock } from '../data/products';
+import { site } from '../data/site';
+import Tire from './Tire.astro';
+
+interface Props {
+  product: Product;
+}
+const { product } = Astro.props;
+const inStock = product.stock > 0;
+---
+
+<article class="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-black/[0.08] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:border-black/[0.12] hover:shadow-[0_24px_60px_-24px_rgba(20,23,28,0.35)]">
+  <!-- Hover glow -->
+  <div class="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-brand/0 blur-2xl transition-colors duration-500 group-hover:bg-brand/10"></div>
+
+  <div class="relative flex items-center justify-between">
+    <span class="text-xs font-bold uppercase tracking-widest text-steel">
+      {product.brand} · {product.season}
+    </span>
+    {product.bestSeller && (
+      <span class="rounded-full bg-brand px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+        ★ Best seller
+      </span>
+    )}
+  </div>
+
+  <!-- Tire artwork -->
+  <div class="relative my-6 flex justify-center">
+    <div class="absolute h-28 w-28 rounded-full bg-black/[0.04] blur-xl transition-transform duration-500 group-hover:scale-110"></div>
+    <Tire class="relative h-32 w-32 transition-transform duration-[900ms] ease-out group-hover:rotate-[200deg]" />
+  </div>
+
+  <h3 class="font-display text-2xl font-bold uppercase leading-none text-ink">{product.model}</h3>
+  <p class="mt-1 font-mono text-sm text-steel">{product.size}</p>
+
+  <div class="mt-5 flex items-end justify-between border-t border-black/5 pt-4">
+    <div>
+      <span class="font-display text-3xl font-bold text-ink">${product.price}</span>
+      <span class="block text-[11px] font-medium text-steel">all-in · per tire · {site.currency}</span>
+    </div>
+    <span
+      class:list={[
+        'flex items-center gap-1.5 text-xs font-semibold',
+        inStock ? 'text-emerald-600' : 'text-steel',
+      ]}
+    >
+      <span class:list={['h-2 w-2 rounded-full', inStock ? 'bg-emerald-500' : 'bg-gray-400']}></span>
+      {inStock ? `${formatStock(product.stock)} in stock` : 'Out of stock'}
+    </span>
+  </div>
+
+  <a
+    href="/book"
+    class="btn-dark mt-5 w-full py-2.5 text-sm group-hover:bg-brand group-hover:text-white"
+  >
+    Add & book install
+  </a>
+</article>

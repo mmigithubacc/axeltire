@@ -1,0 +1,26 @@
+---
+/** Consistent premium hero band for interior pages. */
+interface Props {
+  eyebrow: string;
+  title: string;
+}
+const { eyebrow, title } = Astro.props;
+---
+
+<section class="grain relative overflow-hidden bg-ink text-white">
+  <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+    <div class="absolute -right-16 -top-24 h-80 w-80 rounded-full bg-brand/20 blur-[100px]"></div>
+    <div
+      class="absolute inset-0 opacity-[0.1]"
+      style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.5) 1px, transparent 0); background-size: 32px 32px;"
+    >
+    </div>
+  </div>
+  <div class="container-px relative py-16 sm:py-20">
+    <p class="reveal eyebrow">{eyebrow}</p>
+    <h1 class="reveal heading mt-3 text-5xl sm:text-6xl" style="transition-delay: 60ms;">{title}</h1>
+    <div class="reveal mt-4 max-w-2xl text-lg leading-relaxed text-white/70" style="transition-delay: 120ms;">
+      <slot />
+    </div>
+  </div>
+</section>

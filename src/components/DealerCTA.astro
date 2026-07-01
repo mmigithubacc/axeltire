@@ -1,0 +1,38 @@
+---
+import { dealerStats } from '../data/site';
+import Icon from './Icon.astro';
+---
+
+<section class="grain relative overflow-hidden bg-ink text-white">
+  <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+    <div class="absolute -left-20 bottom-0 h-80 w-80 rounded-full bg-brand/20 blur-[100px]"></div>
+  </div>
+  <div class="container-px section relative grid items-center gap-12 lg:grid-cols-2">
+    <div class="reveal">
+      <p class="eyebrow">For tire shops</p>
+      <h2 class="heading mt-3 text-4xl sm:text-5xl">Run a tire shop?</h2>
+      <p class="mt-5 max-w-lg text-lg leading-relaxed text-white/70">
+        Wholesale dealer pricing, real-time inventory, COD via Stripe at order.
+        Apply in 5 minutes — Edmonton-area dealers welcome.
+      </p>
+      <a href="/dealers" class="btn-primary mt-8">
+        Apply for dealer access
+        <Icon name="arrow" class="h-5 w-5" />
+      </a>
+    </div>
+
+    <dl class="grid grid-cols-2 gap-4">
+      {
+        dealerStats.map((stat, i) => (
+          <div
+            class="reveal rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur transition-colors hover:border-white/25 hover:bg-white/[0.08]"
+            style={`transition-delay: ${i * 80}ms;`}
+          >
+            <dt class="font-display text-3xl font-bold text-brand-light">{stat.value}</dt>
+            <dd class="mt-1 text-sm font-medium text-white/70">{stat.label}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>

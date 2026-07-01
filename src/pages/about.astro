@@ -1,0 +1,74 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { valueProps, site } from '../data/site';
+---
+
+<Layout
+  title="About"
+  description="Axel Tires is an owner-operated, family-run wholesale and retail tire shop in Edmonton. All-in pricing, real-time inventory, no upsells."
+>
+  <section class="grain relative overflow-hidden bg-ink text-white">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="absolute -right-16 -top-24 h-80 w-80 rounded-full bg-brand/20 blur-[100px]"></div>
+    </div>
+    <div class="container-px relative py-16 sm:py-20">
+      <p class="reveal eyebrow">About</p>
+      <h1 class="reveal heading mt-3 text-5xl sm:text-6xl" style="transition-delay: 60ms;">Honest tires,<br />built in Edmonton.</h1>
+      <p class="reveal mt-5 max-w-2xl text-lg leading-relaxed text-white/70" style="transition-delay: 120ms;">
+        We built Axel Tires because every other tire shop in {site.city} makes you wait
+        on hold to learn whether they have your size — then upsells you a brake job.
+        Not us.
+      </p>
+      <p class="reveal mt-4 text-sm font-semibold uppercase tracking-widest text-brand-light" style="transition-delay: 180ms;">
+        {site.city}, {site.province} · Est. {site.established} · Family-owned
+      </p>
+    </div>
+  </section>
+
+  <section class="section bg-white">
+    <div class="container-px grid gap-12 lg:grid-cols-2 lg:items-start">
+      <div class="prose-tire">
+        <h2 class="heading text-3xl text-ink">Why we exist</h2>
+        <p class="mt-4 leading-relaxed text-steel">
+          Buying tires is one of the most opaque purchases people make. Prices change
+          at the counter, “install” hides four extra fees, and nobody can tell you if
+          your size is even in the building. We flipped that around.
+        </p>
+        <p class="mt-4 leading-relaxed text-steel">
+          The price you see on our catalog is the price you pay — tire, install,
+          balance and disposal, all in. Our inventory is live, so “in stock” means
+          it’s physically on our floor. And we run wholesale and retail out of the
+          same warehouse, which keeps our pricing sharp for everyone.
+        </p>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        {
+          valueProps.map((prop) => (
+            <div class="rounded-xl border border-black/10 bg-mist p-5">
+              <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand text-white">
+                <Icon name={prop.icon} class="h-5 w-5" />
+              </span>
+              <h3 class="heading mt-3 text-lg">{prop.title}</h3>
+              <p class="mt-1.5 text-sm leading-relaxed text-steel">{prop.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section bg-ink text-white">
+    <div class="container-px text-center">
+      <h2 class="heading text-4xl sm:text-5xl">Ready when you are.</h2>
+      <p class="mx-auto mt-4 max-w-xl text-lg text-white/70">
+        Shop live Edmonton stock or book an install — walk-ins always welcome.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/shop" class="btn-primary">Shop tires</a>
+        <a href="/book" class="btn-outline">Book install</a>
+      </div>
+    </div>
+  </section>
+</Layout>

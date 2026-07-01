@@ -1,0 +1,75 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { site } from '../data/site';
+
+const faqs: { q: string; a: string; id?: string }[] = [
+  {
+    q: 'What does “all-in pricing” mean?',
+    a: 'The price on the catalog covers the tire, installation, balancing and disposal (including ARMA). No add-ons at the counter, no inspection upcharges.',
+  },
+  {
+    q: 'Is the inventory count real?',
+    a: 'Yes. What you see is what is physically on our floor, updated the moment a tire moves. If it says in stock, it’s here.',
+  },
+  {
+    q: 'Do I need an appointment?',
+    a: 'Walk-ins are always accepted. Booking ahead cuts the wait — a 4-tire job averages about 48 minutes.',
+  },
+  {
+    q: 'Where are you located?',
+    a: 'We’re in Edmonton, AB. The exact warehouse address is coming soon — email us and we’ll point you in.',
+  },
+  {
+    q: 'Can I buy just the tires without install?',
+    a: 'Yes, tire-only is fine. And we won’t pitch you a brake job you don’t need.',
+  },
+  {
+    q: 'How does the dealer program work?',
+    a: 'Tire shops get tier-based wholesale pricing and real-time inventory, paid COD via Stripe at order — no membership fee, no Net-30. Apply and most decisions land within 1–2 business days.',
+  },
+  {
+    q: 'What warranty comes with my tires?',
+    a: 'Every tire carries its manufacturer’s warranty. Keep your receipt and reach out with the DOT code and we’ll help you process any claim.',
+    id: 'warranty',
+  },
+];
+---
+
+<Layout
+  title="FAQ"
+  description="Answers about all-in pricing, live inventory, install times, warranty and the dealer program at Axel Tires."
+>
+  <PageHeader eyebrow="Help" title="FAQ.">
+    Straight answers. Can’t find yours? Email
+    <a href={`mailto:${site.email}`} class="font-semibold text-brand-light">{site.email}</a>.
+  </PageHeader>
+
+  <section class="section bg-white">
+    <div class="container-px max-w-3xl">
+      <div class="divide-y divide-black/10 overflow-hidden rounded-2xl border border-black/10">
+        {
+          faqs.map((faq) => (
+            <details class="group bg-white open:bg-mist" id={faq.id}>
+              <summary class="flex cursor-pointer items-center justify-between gap-4 px-6 py-5 text-lg font-semibold text-ink marker:content-none">
+                {faq.q}
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-black/15 text-brand transition-transform group-open:rotate-45">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </span>
+              </summary>
+              <p class="px-6 pb-6 leading-relaxed text-steel">{faq.a}</p>
+            </details>
+          ))
+        }
+      </div>
+
+      <div class="mt-10 rounded-2xl border border-black/10 bg-ink p-8 text-center text-white">
+        <h2 class="heading text-2xl">Still have a question?</h2>
+        <p class="mt-2 text-white/70">We answer the phone and reply to email same-day.</p>
+        <a href="/contact" class="btn-primary mt-6">Contact us</a>
+      </div>
+    </div>
+  </section>
+</Layout>

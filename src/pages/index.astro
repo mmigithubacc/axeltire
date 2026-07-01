@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import ProductCard from '../components/ProductCard.astro';
+import BrandMarquee from '../components/BrandMarquee.astro';
+import ValueProps from '../components/ValueProps.astro';
+import DealerCTA from '../components/DealerCTA.astro';
+import Icon from '../components/Icon.astro';
+import { products } from '../data/products';
+import { site } from '../data/site';
+
+const featured = products.slice(0, 8);
+---
+
+<Layout>
+  <Hero />
+
+  <!-- Featured products -->
+  <section class="section bg-white">
+    <div class="container-px">
+      <div class="reveal flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="eyebrow">Featured · live stock</p>
+          <h2 class="heading mt-3 text-4xl sm:text-5xl">This week’s picks.</h2>
+        </div>
+        <a href="/shop" class="group inline-flex items-center gap-2 font-semibold text-brand hover:text-brand-dark">
+          See all {site.stockCount}
+          <Icon name="arrow" class="h-5 w-5 transition-transform group-hover:translate-x-1" />
+        </a>
+      </div>
+
+      <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        {featured.map((product, i) => (
+          <div class="reveal" style={`transition-delay: ${(i % 4) * 80}ms;`}>
+            <ProductCard product={product} />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <BrandMarquee />
+  <ValueProps />
+  <DealerCTA />
+</Layout>

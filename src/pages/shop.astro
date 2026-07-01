@@ -1,0 +1,113 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ProductCard from '../components/ProductCard.astro';
+import SizeFinder from '../components/SizeFinder.astro';
+import { products } from '../data/products';
+import { site } from '../data/site';
+
+const seasons = ['All', ...new Set(products.map((p) => p.season))];
+---
+
+<Layout
+  title="Shop tires"
+  description="Browse live Edmonton tire inventory with all-in pricing — tire, install, balance and disposal in one number."
+>
+  <PageHeader eyebrow="Live · Edmonton stock" title="Shop tires.">
+    Every price is all-in — tire, install, balance and disposal. What you see is
+    on our floor right now.
+  </PageHeader>
+
+  <section class="section bg-mist">
+    <div class="container-px grid gap-8 lg:grid-cols-[300px_1fr]">
+      <!-- Sidebar -->
+      <aside class="lg:sticky lg:top-28 lg:self-start">
+        <SizeFinder />
+        <div class="mt-5 rounded-2xl border border-black/10 bg-white p-5">
+          <h2 class="text-sm font-bold uppercase tracking-widest text-ink">Season</h2>
+          <div class="mt-3 flex flex-wrap gap-2">
+            {
+              seasons.map((s) => (
+                <button
+                  type="button"
+                  data-season={s}
+                  class="season-chip rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-steel transition-colors data-[active]:border-brand data-[active]:bg-brand data-[active]:text-white"
+                  data-active={s === 'All' ? '' : undefined}
+                >
+                  {s}
+                </button>
+              ))
+            }
+          </div>
+        </div>
+      </aside>
+
+      <!-- Grid -->
+      <div>
+        <p class="mb-4 text-sm font-medium text-steel">
+          Showing <span id="result-count">{products.length}</span> of {site.stockCount} in stock
+        </p>
+        <div id="product-grid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {
+            products.map((product, i) => (
+              <div class="product-item reveal" style={`transition-delay: ${(i % 3) * 70}ms;`} data-size={product.size.toLowerCase()} data-season={product.season}>
+                <ProductCard product={product} />
+              </div>
+            ))
+          }
+        </div>
+        <p id="empty-state" class="hidden rounded-xl border border-dashed border-black/15 bg-white p-10 text-center text-steel">
+          No tires match that search. Try a different size, or
+          <a href={`mailto:${site.email}`} class="font-semibold text-brand">email us</a> —
+          we carry {site.stockCount}+ and restock daily.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const items = Array.from(document.querySelectorAll<HTMLElement>('.product-item'));
+    const count = document.getElementById('result-count');
+    const empty = document.getElementById('empty-state');
+    const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.season-chip'));
+
+    // Pre-fill size query from ?size= (used by the SizeFinder forms).
+    const params = new URLSearchParams(location.search);
+    const initialSize = (params.get('size') || '').trim().toLowerCase();
+    const sizeInput = document.querySelector<HTMLInputElement>('input[name="size"]');
+    if (initialSize && sizeInput) sizeInput.value = initialSize;
+
+    let season = 'All';
+
+    function apply() {
+      const size = (sizeInput?.value || '').trim().toLowerCase();
+      let shown = 0;
+      items.forEach((el) => {
+        const matchSize = !size || el.dataset.size?.includes(size);
+        const matchSeason = season === 'All' || el.dataset.season === season;
+        const visible = Boolean(matchSize && matchSeason);
+        el.classList.toggle('hidden', !visible);
+        if (visible) shown++;
+      });
+      if (count) count.textContent = String(shown);
+      empty?.classList.toggle('hidden', shown !== 0);
+    }
+
+    // Filter live as the shopper types instead of navigating away.
+    sizeInput?.addEventListener('input', apply);
+    sizeInput?.closest('form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      apply();
+    });
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        season = chip.dataset.season || 'All';
+        chips.forEach((c) => delete c.dataset.active);
+        chip.dataset.active = '';
+        apply();
+      });
+    });
+
+    if (initialSize) apply();
+  </script>
+</Layout>

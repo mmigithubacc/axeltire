@@ -1,0 +1,24 @@
+---
+import { announcements, site } from '../data/site';
+---
+
+<div class="bg-brand text-white">
+  <div class="container-px flex h-9 items-center justify-between gap-4 text-xs font-semibold tracking-wide">
+    <div class="flex items-center gap-2 overflow-hidden sm:gap-4">
+      {
+        announcements.map((msg, i) => (
+          <span
+            class:list={[
+              'flex items-center gap-2 whitespace-nowrap',
+              i > 1 ? 'hidden lg:flex' : i > 0 ? 'hidden sm:flex' : 'flex',
+            ]}
+          >
+            {i > 0 && <span aria-hidden="true" class="text-white/50">·</span>}
+            {msg}
+          </span>
+        ))
+      }
+    </div>
+    <span class="shrink-0 text-white/90">{site.locale} · {site.currency}</span>
+  </div>
+</div>

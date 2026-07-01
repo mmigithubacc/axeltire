@@ -1,0 +1,110 @@
+---
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+import Tire from './Tire.astro';
+import SizeFinder from './SizeFinder.astro';
+
+const stats = [
+  { value: 750, suffix: '', label: 'Tires in stock' },
+  { value: 48, suffix: ' min', label: 'Avg 4-tire install' },
+  { value: 0, prefix: '$', label: 'Hidden fees' },
+];
+---
+
+<section class="grain relative overflow-hidden bg-ink text-white">
+  <!-- Ambient light + giant tire -->
+  <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+    <div class="absolute -right-24 top-1/2 h-[42rem] w-[42rem] -translate-y-1/2 rounded-full bg-brand/25 blur-[120px]"></div>
+    <div class="absolute -left-40 -top-20 h-96 w-96 rounded-full bg-brand/10 blur-3xl"></div>
+    <div class="absolute right-[-18rem] top-1/2 -translate-y-1/2 opacity-40 lg:right-[-13rem] lg:opacity-70 xl:right-[-9rem]">
+      <Tire class="animate-spin-slow h-[32rem] w-[32rem] drop-shadow-2xl xl:h-[40rem] xl:w-[40rem]" />
+    </div>
+    <div
+      class="absolute inset-0 opacity-[0.12]"
+      style="background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.5) 1px, transparent 0); background-size: 34px 34px;"
+    >
+    </div>
+  </div>
+
+  <div class="container-px relative grid gap-14 py-20 sm:py-28 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+    <div>
+      <span class="reveal inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.15em] backdrop-blur">
+        <span class="relative flex h-2 w-2">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+        </span>
+        Live · Edmonton stock
+      </span>
+
+      <h1 class="reveal heading mt-6 text-6xl leading-[0.9] sm:text-7xl lg:text-[5.5rem]" style="transition-delay: 60ms;">
+        Honest tires.<br />
+        <span class="bg-gradient-to-r from-brand-light via-brand to-brand-light bg-clip-text text-transparent">
+          No upsells.
+        </span>
+      </h1>
+
+      <p class="reveal mt-7 max-w-xl text-lg leading-relaxed text-white/75" style="transition-delay: 120ms;">
+        Wholesale and retail in {site.city} — the price you see covers tire, install,
+        balance and disposal. That’s it.
+      </p>
+
+      <div class="reveal mt-9 flex flex-wrap gap-3" style="transition-delay: 180ms;">
+        <a href="/shop" class="btn-primary">
+          Shop tires
+          <Icon name="arrow" class="h-5 w-5" />
+        </a>
+        <a href="/book" class="btn-outline">Book install</a>
+      </div>
+
+      <!-- Trust stats with count-up -->
+      <dl class="reveal mt-12 grid max-w-lg grid-cols-3 gap-6 border-t border-white/10 pt-8" style="transition-delay: 240ms;">
+        {
+          stats.map((s) => (
+            <div>
+              <dt
+                class="counter font-display text-4xl font-bold text-white"
+                data-to={s.value}
+                data-prefix={s.prefix ?? ''}
+                data-suffix={s.suffix ?? ''}
+              >
+                {s.prefix ?? ''}{s.value}{s.suffix ?? ''}
+              </dt>
+              <dd class="mt-1 text-xs uppercase tracking-widest text-white/50">{s.label}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+
+    <div class="reveal relative z-10 lg:pl-6" style="transition-delay: 160ms;">
+      <SizeFinder variant="dark" />
+      <p class="mt-4 text-center text-sm text-white/45 lg:text-left">
+        <span class="font-semibold text-brand-light">★ Best seller</span> · Haida Winter HD617
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Animate the trust-stat numbers up when the hero mounts.
+  const counters = document.querySelectorAll<HTMLElement>('.counter');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  counters.forEach((el) => {
+    const to = Number(el.dataset.to || '0');
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    if (reduce || to === 0) {
+      el.textContent = `${prefix}${to}${suffix}`;
+      return;
+    }
+    const start = performance.now();
+    const dur = 1400;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = `${prefix}${Math.round(to * eased)}${suffix}`;
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+</script>
