@@ -1,0 +1,58 @@
+---
+/**
+ * Emits ItemList + Product/Offer JSON-LD so the in-stock tires are eligible
+ * for Google rich results / merchant listings. Includes price, availability,
+ * the 2-tire minimum, and Edmonton delivery shipping details.
+ */
+import type { Product } from '../data/products';
+import { site, delivery } from '../data/site';
+
+interface Props {
+  products: Product[];
+}
+const { products } = Astro.props;
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  itemListElement: products.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    item: {
+      '@type': 'Product',
+      name: `${p.brand} ${p.model} ${p.size} ${p.season} Tire`,
+      sku: p.id,
+      brand: { '@type': 'Brand', name: p.brand },
+      category: `${p.season} tire`,
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'CAD',
+        price: p.price,
+        priceValidUntil: `${site.established + 1}-12-31`,
+        availability:
+          p.stock > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        url: `${site.url}/shop`,
+        seller: { '@id': `${site.url}/#business` },
+        eligibleQuantity: {
+          '@type': 'QuantitativeValue',
+          minValue: delivery.minTires,
+          unitText: 'tires',
+        },
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressRegion: 'AB',
+            addressCountry: 'CA',
+          },
+        },
+      },
+    },
+  })),
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(graph)} />
