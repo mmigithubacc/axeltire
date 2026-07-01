@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHeader from '../components/PageHeader.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import { site, delivery } from '../data/site';
 
 const faqs: { q: string; a: string; id?: string }[] = [
@@ -60,6 +61,8 @@ const faqSchema = {
     Straight answers. Can’t find yours? Email
     <a href={`mailto:${site.email}`} class="font-semibold text-brand-light">{site.email}</a>.
   </PageHeader>
+
+  <Breadcrumbs items={[{ label: 'FAQ', href: '/faq' }]} />
 
   <section class="section bg-white">
     <div class="container-px max-w-3xl">
