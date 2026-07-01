@@ -2,120 +2,478 @@
 import Layout from '../layouts/Layout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
-import ProductCard from '../components/ProductCard.astro';
 import ProductSchema from '../components/ProductSchema.astro';
-import SizeFinder from '../components/SizeFinder.astro';
-import { products } from '../data/products';
+import Icon from '../components/Icon.astro';
+import {
+  products,
+  brandsInStock,
+  seasonsInStock,
+  formatStock,
+  sizeCode,
+} from '../data/products';
 import { site, delivery } from '../data/site';
 
-const seasons = ['All', ...new Set(products.map((p) => p.season))];
 const minPrice = Math.min(...products.map((p) => p.price));
+
+const seasonIcon: Record<string, string> = {
+  Winter: 'snow',
+  'All-Weather': 'globe',
+  'All-Season': 'sun',
+  Summer: 'sun',
+};
+
+// Attribute flag chips rendered under each tire's description.
+const flagsOf = (p: (typeof products)[number]) =>
+  [
+    p.ev && { label: 'EV', icon: 'bolt' },
+    p.runFlat && { label: 'Run-flat', icon: 'shield' },
+    p.studdable && { label: 'Studdable', icon: 'snow' },
+    p.onSale && { label: 'On sale', icon: 'tag' },
+  ].filter(Boolean) as { label: string; icon: string }[];
 ---
 
 <Layout
-  title={`Shop Tires in ${site.city} — ${site.stockCount}+ In Stock`}
-  description={`Browse ${site.stockCount}+ tires in stock in ${site.city} with all-in pricing from $${minPrice}. Search by size, book same-day install, or get 2+ tires delivered.`}
+  title={`Shop Tires in ${site.city} — Search ${products.length}+ Sizes In Stock`}
+  description={`Search ${site.city} tire inventory by size (e.g. 2055516) or brand. All-in pricing from $${minPrice}, live stock, and add-to-order. Delivery on ${delivery.minTires}+ tires.`}
 >
-  <PageHeader eyebrow="Live · Edmonton stock" title="Shop tires.">
-    Every price is all-in — tire, install, balance and disposal. What you see is
-    on our floor right now. Get {delivery.minTires}+ tires delivered anywhere in
-    {site.city}.
+  <PageHeader eyebrow="Live · Edmonton stock" title="Search & order tires.">
+    Type your size (e.g. <span class="font-mono">2055516</span>) or a brand,
+    filter, and add to your order. Every price is all-in — tire, install,
+    balance &amp; disposal. Get {delivery.minTires}+ delivered in {site.city}.
   </PageHeader>
 
   <Breadcrumbs items={[{ label: 'Shop tires', href: '/shop' }]} />
 
-  <section class="section bg-mist">
-    <div class="container-px grid gap-8 lg:grid-cols-[300px_1fr]">
-      <!-- Sidebar -->
-      <aside class="lg:sticky lg:top-28 lg:self-start">
-        <SizeFinder />
-        <div class="mt-5 rounded-2xl border border-black/10 bg-white p-5">
-          <h2 class="text-sm font-bold uppercase tracking-widest text-ink">Season</h2>
-          <div class="mt-3 flex flex-wrap gap-2">
-            {
-              seasons.map((s) => (
-                <button
-                  type="button"
-                  data-season={s}
-                  class="season-chip rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-steel transition-colors data-[active]:border-brand data-[active]:bg-brand data-[active]:text-white"
-                  data-active={s === 'All' ? '' : undefined}
-                >
-                  {s}
-                </button>
-              ))
-            }
+  <section class="bg-mist py-10 sm:py-14">
+    <div class="container-px">
+      <!-- Search + filter panel -->
+      <form id="filters" class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6" role="search">
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <div class="relative flex-1">
+            <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
+              <Icon name="search" class="h-5 w-5 text-steel" />
+            </span>
+            <input
+              id="q"
+              type="text"
+              autocomplete="off"
+              placeholder="Search by size (2055516) or brand — e.g. “Michelin”"
+              class="w-full rounded-lg border border-black/10 bg-white py-3 pl-11 pr-4 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
+            />
+          </div>
+          <button type="button" id="clear" class="rounded-lg border border-black/15 px-5 py-3 text-sm font-semibold text-steel transition-colors hover:bg-mist">
+            Clear
+          </button>
+        </div>
+
+        <!-- Filter controls -->
+        <div class="mt-4 grid gap-4 border-t border-black/5 pt-4 lg:grid-cols-[220px_1fr]">
+          <label class="block">
+            <span class="text-xs font-bold uppercase tracking-widest text-steel">Manufacturer</span>
+            <select id="brand" class="mt-1.5 w-full rounded-lg border border-black/10 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30">
+              <option value="">All brands</option>
+              {brandsInStock.map((b) => <option value={b}>{b}</option>)}
+            </select>
+          </label>
+
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-steel">Season</span>
+            <div class="mt-1.5 flex flex-wrap gap-2">
+              <button type="button" data-season="All" class="season-chip is-active">All</button>
+              {seasonsInStock.map((s) => (
+                <button type="button" data-season={s} class="season-chip">{s}</button>
+              ))}
+            </div>
           </div>
         </div>
-      </aside>
 
-      <!-- Grid -->
-      <div>
-        <p class="mb-4 text-sm font-medium text-steel">
-          Showing <span id="result-count">{products.length}</span> of {site.stockCount} in stock
-        </p>
-        <div id="product-grid" class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {
-            products.map((product, i) => (
-              <div class="product-item reveal" style={`transition-delay: ${(i % 3) * 70}ms;`} data-size={product.size.toLowerCase()} data-season={product.season}>
-                <ProductCard product={product} />
-              </div>
-            ))
-          }
+        <!-- Attribute toggles -->
+        <div class="mt-4 flex flex-wrap gap-2">
+          {[
+            { key: 'sale', label: 'On sale' },
+            { key: 'ev', label: 'EV-ready' },
+            { key: 'runflat', label: 'Run-flat' },
+            { key: 'studdable', label: 'Studdable' },
+          ].map((t) => (
+            <label class="toggle-chip">
+              <input type="checkbox" data-toggle={t.key} class="peer sr-only" />
+              <span class="peer-checked:hidden"><Icon name="plus" class="h-3.5 w-3.5" /></span>
+              <span class="hidden peer-checked:inline"><Icon name="check" class="h-3.5 w-3.5" /></span>
+              {t.label}
+            </label>
+          ))}
         </div>
-        <p id="empty-state" class="hidden rounded-xl border border-dashed border-black/15 bg-white p-10 text-center text-steel">
-          No tires match that search. Try a different size, or
-          <a href={`mailto:${site.email}`} class="font-semibold text-brand">email us</a> —
-          we carry {site.stockCount}+ and restock daily.
+      </form>
+
+      <!-- Toolbar -->
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <p class="text-sm font-medium text-steel">
+          <span id="count">{products.length}</span> results ·
+          <span class="text-emerald-600">{site.stockCount}+ in stock</span>
         </p>
+        <label class="flex items-center gap-2 text-sm text-steel">
+          Sort
+          <select id="sort" class="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm outline-none focus:border-brand">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="stock">In stock first</option>
+          </select>
+        </label>
       </div>
+
+      <!-- Column header (desktop) -->
+      <div class="mt-4 hidden rounded-t-xl bg-ink px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 md:grid md:grid-cols-[140px_1fr_84px_160px_120px_150px] md:gap-4">
+        <span>Size</span><span>Description</span><span>Spec</span><span>Price</span><span>On hand</span><span class="text-right">Order</span>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="overflow-hidden rounded-b-xl border border-black/10 bg-white md:border-t-0">
+        {
+          products.map((p, i) => {
+            const out = p.stock === 0;
+            return (
+              <div
+                class="trow grid grid-cols-1 gap-3 border-b border-black/[0.06] px-5 py-4 last:border-0 md:grid-cols-[140px_1fr_84px_160px_120px_150px] md:items-center md:gap-4"
+                data-id={p.id}
+                data-code={sizeCode(p.size)}
+                data-text={`${p.brand} ${p.model} ${p.size}`.toLowerCase()}
+                data-brand={p.brand}
+                data-season={p.season}
+                data-price={p.price}
+                data-stock={p.stock}
+                data-sku={p.sku}
+                data-size={p.size}
+                data-name={`${p.brand} ${p.model}`}
+                data-featured={i}
+                data-sale={p.onSale ? '1' : ''}
+                data-ev={p.ev ? '1' : ''}
+                data-runflat={p.runFlat ? '1' : ''}
+                data-studdable={p.studdable ? '1' : ''}
+              >
+                <div class="min-w-0">
+                  <p class="font-display text-lg font-bold text-ink">{p.size}</p>
+                  <p class="font-mono text-[11px] text-steel">{p.sku}</p>
+                </div>
+
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mist text-brand">
+                      <Icon name={seasonIcon[p.season]} class="h-4 w-4" />
+                    </span>
+                    <p class="truncate font-semibold text-ink">
+                      {p.brand} <span class="font-normal text-steel">{p.model}</span>
+                    </p>
+                    {p.bestSeller && (
+                      <span class="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold uppercase text-brand">Top</span>
+                    )}
+                  </div>
+                  <div class="mt-1.5 flex flex-wrap gap-1.5">
+                    {flagsOf(p).map((f) => (
+                      <span class="inline-flex items-center gap-1 rounded-md bg-mist px-1.5 py-0.5 text-[11px] font-medium text-steel">
+                        <Icon name={f.icon} class="h-3 w-3" />{f.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div class="text-sm text-steel">
+                  <span class="md:hidden text-xs font-semibold uppercase tracking-wide">Load/speed: </span>
+                  <span class="font-mono">{p.loadIndex}{p.speedRating}</span>
+                </div>
+
+                <div>
+                  <span class="font-display text-2xl font-bold text-ink">${p.price}</span>
+                  <span class="ml-1 text-xs text-steel line-through">${p.msrp}</span>
+                  <span class="block text-[11px] font-semibold text-emerald-600">
+                    all-in · save ${p.msrp - p.price}
+                  </span>
+                </div>
+
+                <div>
+                  {out ? (
+                    <span class="inline-flex items-center gap-1.5 rounded-md bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
+                      Call for availability
+                    </span>
+                  ) : (
+                    <span class="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                      <span class="h-2 w-2 rounded-full bg-emerald-500" />
+                      {formatStock(p.stock)} on hand
+                    </span>
+                  )}
+                </div>
+
+                <div class="order-cell md:text-right" data-id={p.id}>
+                  {out ? (
+                    <a href={`mailto:${site.email}?subject=${encodeURIComponent(`Availability: ${p.sku}`)}`} class="btn-dark w-full py-2 text-sm md:w-auto">
+                      Enquire
+                    </a>
+                  ) : (
+                    <button type="button" class="add-btn btn-dark w-full py-2 text-sm group-hover:bg-brand md:w-auto" data-id={p.id}>
+                      Add to order
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        }
+      </div>
+
+      <p id="empty" class="hidden rounded-xl border border-dashed border-black/15 bg-white p-10 text-center text-steel">
+        No tires match. Try a different size or brand, or
+        <a href={`mailto:${site.email}`} class="font-semibold text-brand">email us</a> — we restock daily.
+      </p>
     </div>
   </section>
 
-  <script>
-    const items = Array.from(document.querySelectorAll<HTMLElement>('.product-item'));
-    const count = document.getElementById('result-count');
-    const empty = document.getElementById('empty-state');
-    const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.season-chip'));
+  <!-- Sticky order bar -->
+  <div id="order-bar" class="fixed inset-x-0 bottom-0 z-40 translate-y-full border-t border-white/10 bg-ink text-white transition-transform duration-300" hidden>
+    <div class="container-px flex flex-wrap items-center justify-between gap-3 py-3.5">
+      <div class="flex items-center gap-3">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand">
+          <Icon name="cart" class="h-5 w-5" />
+        </span>
+        <p class="text-sm">
+          <span id="order-qty" class="font-bold">0</span> tires in order ·
+          <span id="order-total" class="font-bold">$0</span>
+          <span id="order-hint" class="block text-xs text-white/50"></span>
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="order-clear" class="rounded-lg px-3 py-2 text-sm text-white/70 hover:text-white">Clear</button>
+        <button type="button" id="order-request" class="btn-primary py-2.5 text-sm" data-email={site.email}>Request this order</button>
+      </div>
+    </div>
+  </div>
 
-    // Pre-fill size query from ?size= (used by the SizeFinder forms).
-    const params = new URLSearchParams(location.search);
-    const initialSize = (params.get('size') || '').trim().toLowerCase();
-    const sizeInput = document.querySelector<HTMLInputElement>('input[name="size"]');
-    if (initialSize && sizeInput) sizeInput.value = initialSize;
+  <ProductSchema products={products} />
+
+  <style>
+    .season-chip {
+      border-radius: 9999px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 0.375rem 0.85rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-steel);
+      transition: all 0.15s ease;
+    }
+    .season-chip.is-active {
+      border-color: var(--color-brand);
+      background: var(--color-brand);
+      color: #fff;
+    }
+    .toggle-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      border-radius: 9999px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-steel);
+      transition: all 0.15s ease;
+    }
+    .toggle-chip:has(input:checked) {
+      border-color: var(--color-brand);
+      background: color-mix(in srgb, var(--color-brand) 8%, white);
+      color: var(--color-brand);
+    }
+  </style>
+
+  <script>
+    type OrderItem = { sku: string; name: string; size: string; price: number; qty: number };
+    const KEY = 'axel-order';
+
+    const $ = <T extends HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('.trow'));
+    const resultsEl = document.getElementById('results')!;
+    const countEl = document.getElementById('count')!;
+    const emptyEl = document.getElementById('empty')!;
+    const q = $('#q') as HTMLInputElement;
+    const brandSel = $('#brand') as HTMLSelectElement;
+    const sortSel = $('#sort') as HTMLSelectElement;
+    const seasonChips = Array.from(document.querySelectorAll<HTMLButtonElement>('.season-chip'));
+    const toggles = Array.from(document.querySelectorAll<HTMLInputElement>('[data-toggle]'));
 
     let season = 'All';
 
+    // ---- Filtering + sorting ----
     function apply() {
-      const size = (sizeInput?.value || '').trim().toLowerCase();
+      const raw = q.value.trim().toLowerCase();
+      const digits = raw.replace(/[^0-9]/g, '');
+      const text = raw.replace(/[0-9/]/g, '').trim();
+      const brand = brandSel.value;
+      const on = (k: string) => toggles.find((t) => t.dataset.toggle === k)?.checked;
+
       let shown = 0;
-      items.forEach((el) => {
-        const matchSize = !size || el.dataset.size?.includes(size);
-        const matchSeason = season === 'All' || el.dataset.season === season;
-        const visible = Boolean(matchSize && matchSeason);
-        el.classList.toggle('hidden', !visible);
-        if (visible) shown++;
+      rows.forEach((row) => {
+        const d = row.dataset;
+        const okCode = !digits || (d.code || '').includes(digits);
+        const okText = !text || (d.text || '').includes(text);
+        const okBrand = !brand || d.brand === brand;
+        const okSeason = season === 'All' || d.season === season;
+        const okSale = !on('sale') || d.sale === '1';
+        const okEv = !on('ev') || d.ev === '1';
+        const okRf = !on('runflat') || d.runflat === '1';
+        const okStud = !on('studdable') || d.studdable === '1';
+        const vis = okCode && okText && okBrand && okSeason && okSale && okEv && okRf && okStud;
+        row.classList.toggle('hidden', !vis);
+        if (vis) shown++;
       });
-      if (count) count.textContent = String(shown);
-      empty?.classList.toggle('hidden', shown !== 0);
+      countEl.textContent = String(shown);
+      emptyEl.classList.toggle('hidden', shown !== 0);
+
+      // Sort visible rows by reordering DOM.
+      const s = sortSel.value;
+      const sorted = [...rows].sort((a, b) => {
+        if (s === 'price-asc') return +a.dataset.price! - +b.dataset.price!;
+        if (s === 'price-desc') return +b.dataset.price! - +a.dataset.price!;
+        if (s === 'stock') return +b.dataset.stock! - +a.dataset.stock!;
+        return +a.dataset.featured! - +b.dataset.featured!;
+      });
+      sorted.forEach((row) => resultsEl.appendChild(row));
     }
 
-    // Filter live as the shopper types instead of navigating away.
-    sizeInput?.addEventListener('input', apply);
-    sizeInput?.closest('form')?.addEventListener('submit', (e) => {
-      e.preventDefault();
+    q.addEventListener('input', apply);
+    brandSel.addEventListener('change', apply);
+    sortSel.addEventListener('change', apply);
+    document.getElementById('clear')!.addEventListener('click', () => {
+      q.value = '';
+      brandSel.value = '';
+      toggles.forEach((t) => (t.checked = false));
+      season = 'All';
+      seasonChips.forEach((c) => c.classList.toggle('is-active', c.dataset.season === 'All'));
       apply();
     });
-    chips.forEach((chip) => {
+    seasonChips.forEach((chip) =>
       chip.addEventListener('click', () => {
         season = chip.dataset.season || 'All';
-        chips.forEach((c) => delete c.dataset.active);
-        chip.dataset.active = '';
+        seasonChips.forEach((c) => c.classList.toggle('is-active', c === chip));
         apply();
-      });
+      }),
+    );
+    toggles.forEach((t) => t.addEventListener('change', apply));
+
+    // Pre-fill ?size= from the homepage size finder.
+    const initial = new URLSearchParams(location.search).get('size');
+    if (initial) {
+      q.value = initial;
+      apply();
+    }
+
+    // ---- Order builder ----
+    const load = (): Record<string, OrderItem> => {
+      try {
+        return JSON.parse(localStorage.getItem(KEY) || '{}');
+      } catch {
+        return {};
+      }
+    };
+    const save = (o: Record<string, OrderItem>) => localStorage.setItem(KEY, JSON.stringify(o));
+    let order = load();
+
+    const bar = document.getElementById('order-bar')!;
+    const qtyEl = document.getElementById('order-qty')!;
+    const totalEl = document.getElementById('order-total')!;
+    const hintEl = document.getElementById('order-hint')!;
+    const MIN = 2; // delivery minimum
+
+    function renderCell(id: string) {
+      const cell = document.querySelector<HTMLElement>(`.order-cell[data-id="${id}"]`);
+      if (!cell) return;
+      const item = order[id];
+      if (!item) {
+        cell.innerHTML = `<button type="button" class="add-btn btn-dark w-full py-2 text-sm md:w-auto" data-id="${id}">Add to order</button>`;
+      } else {
+        cell.innerHTML = `
+          <div class="inline-flex items-center rounded-lg border border-black/10 md:ml-auto">
+            <button type="button" class="step h-9 w-9 text-lg font-bold text-steel hover:text-brand" data-id="${id}" data-step="-1">−</button>
+            <span class="w-8 text-center font-bold text-ink">${item.qty}</span>
+            <button type="button" class="step h-9 w-9 text-lg font-bold text-steel hover:text-brand" data-id="${id}" data-step="1">+</button>
+          </div>`;
+      }
+    }
+
+    function renderBar() {
+      const items = Object.values(order);
+      const qty = items.reduce((n, i) => n + i.qty, 0);
+      const total = items.reduce((n, i) => n + i.qty * i.price, 0);
+      qtyEl.textContent = String(qty);
+      totalEl.textContent = `$${total.toLocaleString()}`;
+      hintEl.textContent = qty > 0 && qty < MIN ? `Add ${MIN - qty} more tire for Edmonton delivery` : '';
+      if (qty > 0) {
+        bar.hidden = false;
+        requestAnimationFrame(() => bar.classList.remove('translate-y-full'));
+        document.body.style.paddingBottom = '76px';
+      } else {
+        bar.classList.add('translate-y-full');
+        document.body.style.paddingBottom = '';
+        setTimeout(() => (bar.hidden = qty === 0), 300);
+      }
+    }
+
+    function addToOrder(id: string) {
+      const row = document.querySelector<HTMLElement>(`.trow[data-id="${id}"]`);
+      if (!row) return;
+      const d = row.dataset;
+      const cur = order[id]?.qty || 0;
+      order[id] = { sku: d.sku!, name: `${d.name} ${d.size}`, size: d.size!, price: +d.price!, qty: cur + 1 };
+      save(order);
+      renderCell(id);
+      renderBar();
+    }
+    function step(id: string, delta: number) {
+      if (!order[id]) return;
+      order[id].qty += delta;
+      if (order[id].qty <= 0) delete order[id];
+      save(order);
+      renderCell(id);
+      renderBar();
+    }
+
+    // Event delegation for add / stepper.
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      const add = t.closest<HTMLElement>('.add-btn');
+      if (add) return addToOrder(add.dataset.id!);
+      const s = t.closest<HTMLElement>('.step');
+      if (s) return step(s.dataset.id!, +s.dataset.step!);
     });
 
-    if (initialSize) apply();
-  </script>
+    document.getElementById('order-clear')!.addEventListener('click', () => {
+      order = {};
+      save(order);
+      rows.forEach((r) => renderCell(r.dataset.id!));
+      renderBar();
+    });
 
-  <ProductSchema products={products} />
+    const requestBtn = document.getElementById('order-request') as HTMLElement;
+    const EMAIL = requestBtn.dataset.email || '';
+    requestBtn.addEventListener('click', () => {
+      const items = Object.values(order);
+      if (!items.length) return;
+      const lines = items.map((i) => `• ${i.qty}× ${i.name} (${i.sku}) — $${i.price} all-in ea.`);
+      const total = items.reduce((n, i) => n + i.qty * i.price, 0);
+      const body = [
+        'I’d like to order the following tires:',
+        '',
+        ...lines,
+        '',
+        `Subtotal (all-in): $${total}`,
+        '',
+        'Name:',
+        'Phone:',
+        'Pickup or delivery (2+ tires, Edmonton):',
+      ].join('\n');
+      location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Tire order request')}&body=${encodeURIComponent(body)}`;
+    });
+
+    // Hydrate existing order on load.
+    rows.forEach((r) => order[r.dataset.id!] && renderCell(r.dataset.id!));
+    renderBar();
+  </script>
 </Layout>
