@@ -8,9 +8,10 @@ import BrandMarquee from '../components/BrandMarquee.astro';
 import ValueProps from '../components/ValueProps.astro';
 import DealerCTA from '../components/DealerCTA.astro';
 import Icon from '../components/Icon.astro';
-import { products } from '../data/products';
+import { getTires } from '../lib/inventory';
 import { site } from '../data/site';
 
+const products = await getTires();
 const featured = products.slice(0, 8);
 ---
 

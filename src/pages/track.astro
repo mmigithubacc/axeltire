@@ -98,9 +98,37 @@ import { site } from '../data/site';
       }).join('');
     }
 
-    function filter() {
+    const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+    // Look an order up in Supabase by reference (works across devices).
+    async function lookupRemote(term: string): Promise<Order[]> {
+      if (!SB_URL || !SB_KEY || term.length < 4) return [];
+      try {
+        const res = await fetch(
+          `${SB_URL}/rest/v1/orders?select=ref,created_at,items,total,status&ref=ilike.*${encodeURIComponent(term)}*`,
+          { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
+        );
+        if (!res.ok) return [];
+        const rows = await res.json();
+        return rows.map((r: any) => ({
+          ref: r.ref, date: r.created_at, items: r.items, total: r.total, status: r.status,
+        }));
+      } catch {
+        return [];
+      }
+    }
+
+    async function filter() {
       const term = q.value.trim().toLowerCase();
-      render(!term ? all : all.filter((o) => o.ref.toLowerCase().includes(term)));
+      const local = !term ? all : all.filter((o) => o.ref.toLowerCase().includes(term));
+      render(local); // instant from this device
+      if (term) {
+        const remote = await lookupRemote(term);
+        const byRef = new Map<string, Order>();
+        [...local, ...remote].forEach((o) => byRef.set(o.ref, o));
+        render([...byRef.values()]);
+      }
     }
     q.addEventListener('input', filter);
     document.getElementById('clear')!.addEventListener('click', () => { q.value = ''; filter(); });
