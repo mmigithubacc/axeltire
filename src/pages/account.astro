@@ -45,6 +45,10 @@ import { site } from '../data/site';
 
       <!-- Signed in: account + orders -->
       <div id="account" class="hidden">
+        <div id="paid-banner" class="mb-4 hidden rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-emerald-900">
+          <p class="font-semibold">Payment received 🎉</p>
+          <p class="mt-1 text-sm">Thanks! Order <span id="paid-ref" class="font-mono font-bold"></span> is paid and will show below. We’ll be in touch to arrange your delivery/pickup.</p>
+        </div>
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white p-5">
           <p class="text-sm text-steel">Signed in as <span id="acct-email" class="font-semibold text-ink"></span></p>
           <div class="flex gap-2">
@@ -123,6 +127,13 @@ import { site } from '../data/site';
     async function showAccount() {
       ($('auth') as HTMLElement).classList.add('hidden');
       $('account').classList.remove('hidden');
+      // Returning from a successful Stripe payment: clear the cart + confirm.
+      const params = new URLSearchParams(location.search);
+      if (params.get('paid')) {
+        try { localStorage.removeItem('axel-order'); } catch {}
+        $('paid-ref').textContent = params.get('order') ?? '';
+        $('paid-banner').classList.remove('hidden');
+      }
       const { data: { user } } = await sb!.auth.getUser();
       $('acct-email').textContent = user?.email ?? '';
       $('acct-signout').addEventListener('click', async () => { await sb!.auth.signOut(); location.reload(); });

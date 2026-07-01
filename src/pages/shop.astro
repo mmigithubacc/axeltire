@@ -13,6 +13,9 @@ const products = await getTires();
 const brandsInStock = brandsOf(products);
 const seasonsInStock = seasonsOf(products);
 
+// Online card payment (Stripe) is available when the publishable key is set.
+const paymentsEnabled = Boolean(import.meta.env.PUBLIC_STRIPE_PUBLISHABLE_KEY);
+
 const minPrice = Math.min(...products.map((p) => p.price));
 
 const seasonIcon: Record<string, string> = {
@@ -264,9 +267,20 @@ const flagsOf = (p: (typeof products)[number]) =>
         <input name="name" placeholder="Full name" required class="form-field !mt-0" />
         <input name="phone" type="tel" placeholder="Phone" required class="form-field !mt-0" />
         <textarea id="address" name="address" rows="2" placeholder="Delivery address in Edmonton" class="form-field !mt-0"></textarea>
+
+        {paymentsEnabled && (
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-steel">Payment</span>
+            <div class="mt-1.5 grid grid-cols-2 gap-2">
+              <label class="pay-opt"><input type="radio" name="pay" value="online" checked class="peer sr-only" /><span class="block rounded-lg border border-black/10 px-3 py-2.5 text-center text-sm font-semibold peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white">Pay online (card)</span></label>
+              <label class="pay-opt"><input type="radio" name="pay" value="cod" class="peer sr-only" /><span class="block rounded-lg border border-black/10 px-3 py-2.5 text-center text-sm font-semibold peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white">Pay on delivery</span></label>
+            </div>
+          </div>
+        )}
+
         <p id="checkout-error" class="hidden text-sm font-medium text-brand"></p>
-        <button type="submit" class="btn-primary w-full">Place order</button>
-        <p class="text-center text-xs text-steel">You’ll get a reference to track it. We confirm by phone; payment on delivery/pickup.</p>
+        <button type="submit" id="checkout-submit" class="btn-primary w-full">Place order</button>
+        <p class="text-center text-xs text-steel">Card payments are processed securely by Stripe (Visa, Mastercard, Amex &amp; debit). You’ll get a reference to track your order.</p>
       </form>
 
       <div id="checkout-done" class="hidden text-center">
@@ -532,6 +546,17 @@ const flagsOf = (p: (typeof products)[number]) =>
       openCheckout();
     });
 
+    // Reflect the chosen payment method in the button label.
+    const submitBtn = document.getElementById('checkout-submit') as HTMLButtonElement;
+    const payMethod = () =>
+      (checkoutForm.querySelector('input[name="pay"]:checked') as HTMLInputElement | null)?.value ?? 'cod';
+    checkoutForm.querySelectorAll<HTMLInputElement>('input[name="pay"]').forEach((r) =>
+      r.addEventListener('change', () => {
+        submitBtn.textContent = payMethod() === 'online' ? 'Pay now →' : 'Place order';
+      }),
+    );
+    if (payMethod() === 'online') submitBtn.textContent = 'Pay now →';
+
     checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const err = document.getElementById('checkout-error')!;
@@ -539,18 +564,41 @@ const flagsOf = (p: (typeof products)[number]) =>
       const f = new FormData(checkoutForm);
       const items = Object.values(order);
       const total = items.reduce((n, i) => n + i.qty * i.price, 0);
-      const ref = 'AX-' + String(Date.now()).slice(-6);
-      const { data: { user } } = await supabase!.auth.getUser();
       const customer = {
         name: f.get('name'), phone: f.get('phone'),
         fulfilment: f.get('fulfilment'), address: f.get('address') || '',
       };
+
+      // ── Pay online: create a Stripe Checkout session and redirect ──
+      if (payMethod() === 'online') {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Redirecting…';
+        const { data: { session } } = await supabase!.auth.getSession();
+        const res = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: items.map((i) => ({ sku: i.sku, qty: i.qty })),
+            customer,
+            token: session?.access_token,
+          }),
+        }).then((r) => r.json()).catch(() => ({ error: 'Network error.' }));
+        if (res?.url) { location.href = res.url; return; }
+        err.textContent = res?.error || 'Could not start payment.';
+        err.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Pay now →';
+        return;
+      }
+
+      // ── Pay on delivery/pickup: save the order directly ──
+      const ref = 'AX-' + String(Date.now()).slice(-6);
+      const { data: { user } } = await supabase!.auth.getUser();
       const { error } = await supabase!.from('orders').insert({
         ref, user_id: user?.id, items, total, status: 'Requested', customer,
       });
       if (error) { err.textContent = error.message; err.classList.remove('hidden'); return; }
 
-      // Success: clear cart, show reference.
       order = {};
       save(order);
       rows.forEach((r) => renderCell(r.dataset.id!));
