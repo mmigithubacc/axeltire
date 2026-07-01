@@ -56,15 +56,16 @@ import { site } from '../data/site';
   </section>
 
   <script>
+    import { getSupabase } from '../lib/supabase';
+    const sb = getSupabase();
+
     type Item = { sku: string; name: string; size: string; price: number; qty: number };
     type Order = { ref: string; date: string; items: Item[]; total: number; status: string };
 
     const ordersEl = document.getElementById('orders')!;
     const emptyEl = document.getElementById('empty')!;
     const q = document.getElementById('q') as HTMLInputElement;
-    const all: Order[] = (() => {
-      try { return JSON.parse(localStorage.getItem('axel-orders') || '[]'); } catch { return []; }
-    })();
+    let all: Order[] = [];
 
     const fmtDate = (iso: string) => {
       const d = new Date(iso);
@@ -98,44 +99,35 @@ import { site } from '../data/site';
       }).join('');
     }
 
-    const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
-    const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-
-    // Look an order up in Supabase by reference (works across devices).
-    async function lookupRemote(term: string): Promise<Order[]> {
-      if (!SB_URL || !SB_KEY || term.length < 4) return [];
-      try {
-        const res = await fetch(
-          `${SB_URL}/rest/v1/orders?select=ref,created_at,items,total,status&ref=ilike.*${encodeURIComponent(term)}*`,
-          { headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` } },
-        );
-        if (!res.ok) return [];
-        const rows = await res.json();
-        return rows.map((r: any) => ({
-          ref: r.ref, date: r.created_at, items: r.items, total: r.total, status: r.status,
-        }));
-      } catch {
-        return [];
-      }
-    }
-
-    async function filter() {
+    function filter() {
       const term = q.value.trim().toLowerCase();
-      const local = !term ? all : all.filter((o) => o.ref.toLowerCase().includes(term));
-      render(local); // instant from this device
-      if (term) {
-        const remote = await lookupRemote(term);
-        const byRef = new Map<string, Order>();
-        [...local, ...remote].forEach((o) => byRef.set(o.ref, o));
-        render([...byRef.values()]);
-      }
+      render(!term ? all : all.filter((o) => o.ref.toLowerCase().includes(term)));
     }
     q.addEventListener('input', filter);
     document.getElementById('clear')!.addEventListener('click', () => { q.value = ''; filter(); });
 
-    // Deep link: /track?ref=AX-123456
-    const ref = new URLSearchParams(location.search).get('ref');
-    if (ref) q.value = ref;
-    filter();
+    async function load() {
+      // Signed-in customers see their orders from the database (any device).
+      if (sb) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          const { data } = await sb.from('orders')
+            .select('ref,created_at,items,total,status')
+            .order('created_at', { ascending: false });
+          all = (data || []).map((r: any) => ({
+            ref: r.ref, date: r.created_at, items: r.items, total: r.total, status: r.status,
+          }));
+        } else {
+          emptyEl.innerHTML =
+            '<p class="font-semibold text-ink">Sign in to see your orders.</p>' +
+            '<p class="mt-1.5 text-sm">Orders are tied to your account. ' +
+            '<a href="/account" class="font-semibold text-brand">Sign in or create an account</a>.</p>';
+        }
+      }
+      const ref = new URLSearchParams(location.search).get('ref');
+      if (ref) q.value = ref;
+      filter();
+    }
+    load();
   </script>
 </Layout>

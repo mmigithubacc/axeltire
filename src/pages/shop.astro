@@ -242,7 +242,37 @@ const flagsOf = (p: (typeof products)[number]) =>
       </div>
       <div class="flex items-center gap-2">
         <button type="button" id="order-clear" class="rounded-lg px-3 py-2 text-sm text-white/70 hover:text-white">Clear</button>
-        <button type="button" id="order-request" class="btn-primary py-2.5 text-sm" data-email={site.email}>Request this order</button>
+        <button type="button" id="order-request" class="btn-primary py-2.5 text-sm" data-email={site.email}>Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout modal (delivery details) -->
+  <div id="checkout" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h2 class="heading text-2xl text-ink">Your order</h2>
+        <button id="checkout-close" class="text-2xl leading-none text-steel hover:text-ink">&times;</button>
+      </div>
+      <p id="checkout-summary" class="mt-1 text-sm text-steel"></p>
+
+      <form id="checkout-form" class="mt-4 space-y-3">
+        <div class="grid grid-cols-2 gap-2">
+          <label class="fulfil-opt"><input type="radio" name="fulfilment" value="Delivery" checked class="peer sr-only" /><span class="block rounded-lg border border-black/10 px-3 py-2.5 text-center text-sm font-semibold peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white">Delivery</span></label>
+          <label class="fulfil-opt"><input type="radio" name="fulfilment" value="Pickup" class="peer sr-only" /><span class="block rounded-lg border border-black/10 px-3 py-2.5 text-center text-sm font-semibold peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white">Pickup</span></label>
+        </div>
+        <input name="name" placeholder="Full name" required class="form-field !mt-0" />
+        <input name="phone" type="tel" placeholder="Phone" required class="form-field !mt-0" />
+        <textarea id="address" name="address" rows="2" placeholder="Delivery address in Edmonton" class="form-field !mt-0"></textarea>
+        <p id="checkout-error" class="hidden text-sm font-medium text-brand"></p>
+        <button type="submit" class="btn-primary w-full">Place order</button>
+        <p class="text-center text-xs text-steel">You’ll get a reference to track it. We confirm by phone; payment on delivery/pickup.</p>
+      </form>
+
+      <div id="checkout-done" class="hidden text-center">
+        <p class="mt-2 text-lg font-semibold text-ink">Order placed 🎉</p>
+        <p class="mt-1 text-sm text-steel">Reference <span id="done-ref" class="font-mono font-bold text-ink"></span>. We’ll call to confirm.</p>
+        <a href="/account" class="btn-dark mt-4 inline-flex">View my orders</a>
       </div>
     </div>
   </div>
@@ -285,6 +315,9 @@ const flagsOf = (p: (typeof products)[number]) =>
   </style>
 
   <script>
+    import { getSupabase } from '../lib/supabase';
+    const supabase = getSupabase();
+
     type OrderItem = { sku: string; name: string; size: string; price: number; qty: number };
     const KEY = 'axel-order';
 
@@ -453,58 +486,98 @@ const flagsOf = (p: (typeof products)[number]) =>
 
     const requestBtn = document.getElementById('order-request') as HTMLElement;
     const EMAIL = requestBtn.dataset.email || '';
-    requestBtn.addEventListener('click', () => {
+    const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+
+    const checkout = document.getElementById('checkout')!;
+    const checkoutForm = document.getElementById('checkout-form') as HTMLFormElement;
+    const addressEl = document.getElementById('address') as HTMLTextAreaElement;
+
+    // Show/require the address only for delivery.
+    checkoutForm.querySelectorAll<HTMLInputElement>('input[name="fulfilment"]').forEach((r) =>
+      r.addEventListener('change', () => {
+        const delivery = (checkoutForm.querySelector('input[name="fulfilment"]:checked') as HTMLInputElement).value === 'Delivery';
+        addressEl.classList.toggle('hidden', !delivery);
+        addressEl.required = delivery;
+      }),
+    );
+
+    function openCheckout() {
       const items = Object.values(order);
-      if (!items.length) return;
+      const qty = items.reduce((n, i) => n + i.qty, 0);
+      const total = items.reduce((n, i) => n + i.qty * i.price, 0);
+      document.getElementById('checkout-summary')!.textContent = `${qty} tires · $${total.toLocaleString()}`;
+      checkout.classList.remove('hidden');
+      checkout.classList.add('flex');
+    }
+    function closeCheckout() { checkout.classList.add('hidden'); checkout.classList.remove('flex'); }
+    document.getElementById('checkout-close')!.addEventListener('click', closeCheckout);
+    checkout.addEventListener('click', (e) => { if (e.target === checkout) closeCheckout(); });
+
+    // Checkout button: require an account, then open the details modal.
+    requestBtn.addEventListener('click', async () => {
+      if (!Object.values(order).length) return;
+
+      // No backend configured → fall back to an email order request.
+      if (!SB_URL || !SB_KEY || !supabase) {
+        emailFallback();
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        // Send them to sign in / sign up, then straight back to the cart.
+        location.href = '/account?reason=order&next=/shop';
+        return;
+      }
+      openCheckout();
+    });
+
+    checkoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('checkout-error')!;
+      err.classList.add('hidden');
+      const f = new FormData(checkoutForm);
+      const items = Object.values(order);
+      const total = items.reduce((n, i) => n + i.qty * i.price, 0);
+      const ref = 'AX-' + String(Date.now()).slice(-6);
+      const { data: { user } } = await supabase!.auth.getUser();
+      const customer = {
+        name: f.get('name'), phone: f.get('phone'),
+        fulfilment: f.get('fulfilment'), address: f.get('address') || '',
+      };
+      const { error } = await supabase!.from('orders').insert({
+        ref, user_id: user?.id, items, total, status: 'Requested', customer,
+      });
+      if (error) { err.textContent = error.message; err.classList.remove('hidden'); return; }
+
+      // Success: clear cart, show reference.
+      order = {};
+      save(order);
+      rows.forEach((r) => renderCell(r.dataset.id!));
+      renderBar();
+      checkoutForm.classList.add('hidden');
+      document.getElementById('done-ref')!.textContent = ref;
+      document.getElementById('checkout-done')!.classList.remove('hidden');
+    });
+
+    function emailFallback() {
+      const items = Object.values(order);
       const lines = items.map((i) => `• ${i.qty}× ${i.name} (${i.sku}) — $${i.price} ea.`);
       const total = items.reduce((n, i) => n + i.qty * i.price, 0);
-      // Save a local order record so the customer can track it on /track.
       const ref = 'AX-' + String(Date.now()).slice(-6);
-      try {
-        const hist = JSON.parse(localStorage.getItem('axel-orders') || '[]');
-        hist.unshift({ ref, date: new Date().toISOString(), items, total, status: 'Requested' });
-        localStorage.setItem('axel-orders', JSON.stringify(hist.slice(0, 50)));
-      } catch {}
-
-      // Persist to Supabase so the shop sees it in /admin (and /track works cross-device).
-      const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
-      const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
-      if (SB_URL && SB_KEY) {
-        fetch(`${SB_URL}/rest/v1/orders`, {
-          method: 'POST',
-          headers: {
-            apikey: SB_KEY,
-            Authorization: `Bearer ${SB_KEY}`,
-            'Content-Type': 'application/json',
-            Prefer: 'return=minimal',
-          },
-          body: JSON.stringify({ ref, items, total, status: 'Requested' }),
-        }).catch(() => {});
-      }
-
       const body = [
-        `Order reference: ${ref}`,
-        '',
-        'I’d like to order the following tires:',
-        '',
-        ...lines,
-        '',
-        `Subtotal: $${total}`,
-        '',
-        'Name:',
-        'Phone:',
-        'Pickup or delivery (2+ tires, Edmonton):',
+        `Order reference: ${ref}`, '', 'I’d like to order:', '', ...lines, '',
+        `Subtotal: $${total}`, '', 'Name:', 'Phone:', 'Pickup or delivery (Edmonton):',
       ].join('\n');
-      location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Tire order request ' + ref)}&body=${encodeURIComponent(body)}`;
-    });
+      location.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Tire order ' + ref)}&body=${encodeURIComponent(body)}`;
+    }
 
     // Hydrate existing order on load.
     rows.forEach((r) => order[r.dataset.id!] && renderCell(r.dataset.id!));
     renderBar();
 
     // Live stock: refresh on-hand counts + prices from Supabase after load.
-    const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
-    const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+    // (SB_URL / SB_KEY are declared above near the checkout handler.)
     if (SB_URL && SB_KEY) {
       fetch(`${SB_URL}/rest/v1/tires_public?select=id,stock,price,msrp`, {
         headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },

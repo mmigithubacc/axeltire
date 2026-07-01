@@ -11,6 +11,10 @@ configured, the site falls back to `src/data/inventory.json` and still works.
    `db/seed.sql` to load the current 28 SKUs.
 2. **Create the owner's login.** Supabase → Authentication → Users → *Add user*
    (email + password). That account signs in at `/admin`. (No GitHub, no code.)
+2b. **Customer accounts + admin lockdown.** Run `db/accounts.sql` (AFTER the
+   owner login exists). It promotes the owner (earliest user) to admin, ties
+   orders to customer accounts, and restricts stock editing to the admin only.
+   Customers self-register at `/account`; only the admin can edit the catalog.
 3. **Connect the site.** Copy `.env.example` → `.env` and fill in:
    - `PUBLIC_SUPABASE_URL` — Project → Settings → API → Project URL
    - `PUBLIC_SUPABASE_ANON_KEY` — Project → Settings → API → `anon` `public` key
