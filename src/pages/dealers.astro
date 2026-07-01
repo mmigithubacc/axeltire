@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
 import { dealerStats } from '../data/site';
 
@@ -39,6 +40,8 @@ const steps = [
       </dl>
     </div>
   </section>
+
+  <Breadcrumbs items={[{ label: 'Dealers', href: '/dealers' }]} />
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[1fr_340px]">

@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHeader from '../components/PageHeader.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
 import { site, hours } from '../data/site';
 
@@ -19,6 +20,8 @@ const contactCards = [
     Questions about a size, an order, or dealer access? Reach out — same-day
     replies during business hours.
   </PageHeader>
+
+  <Breadcrumbs items={[{ label: 'Contact', href: '/contact' }]} />
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[1fr_360px]">

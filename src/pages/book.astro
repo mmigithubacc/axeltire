@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHeader from '../components/PageHeader.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Icon from '../components/Icon.astro';
 import { site } from '../data/site';
 
@@ -49,6 +50,8 @@ const mailto = `mailto:${site.email}?subject=${mailSubject}&body=${mailBody}`;
     Walk-ins accepted. Booked appointments cut the wait — average 48 min on a
     4-tire job.
   </PageHeader>
+
+  <Breadcrumbs items={[{ label: 'Book install', href: '/book' }]} />
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[1fr_360px]">

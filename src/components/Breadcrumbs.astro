@@ -1,0 +1,51 @@
+---
+/**
+ * Visible breadcrumb trail + BreadcrumbList JSON-LD.
+ * Pass the trail as `items`; the last item is treated as the current page.
+ */
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+
+interface Crumb {
+  label: string;
+  href: string;
+}
+interface Props {
+  items: Crumb[];
+}
+const { items } = Astro.props;
+const trail = [{ label: 'Home', href: '/' }, ...items];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: trail.map((c, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: c.label,
+    item: new URL(c.href, site.url).href,
+  })),
+};
+---
+
+<nav aria-label="Breadcrumb" class="border-b border-black/[0.06] bg-white">
+  <ol class="container-px flex flex-wrap items-center gap-1 py-3 text-sm text-steel">
+    {
+      trail.map((crumb, i) => {
+        const last = i === trail.length - 1;
+        return (
+          <li class="flex items-center gap-1">
+            {i > 0 && <Icon name="arrow" class="h-3.5 w-3.5 text-black/25" />}
+            {last ? (
+              <span class="font-semibold text-ink" aria-current="page">{crumb.label}</span>
+            ) : (
+              <a href={crumb.href} class="transition-colors hover:text-brand">{crumb.label}</a>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>
+
+<script type="application/ld+json" set:html={JSON.stringify(schema)} />

@@ -1,0 +1,57 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Tire from '../components/Tire.astro';
+import SizeFinder from '../components/SizeFinder.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+
+const links = [
+  { label: 'Shop tires', href: '/shop' },
+  { label: 'Book install', href: '/book' },
+  { label: 'Dealers', href: '/dealers' },
+  { label: 'Contact', href: '/contact' },
+];
+---
+
+<Layout title="Page not found" noindex>
+  <section class="grain relative overflow-hidden bg-ink text-white">
+    <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div class="absolute -right-24 top-1/2 h-[36rem] w-[36rem] -translate-y-1/2 rounded-full bg-brand/20 blur-[120px]"></div>
+    </div>
+    <div class="container-px relative grid gap-12 py-20 sm:py-28 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div>
+        <div class="flex items-center gap-4">
+          <span class="font-display text-7xl font-bold text-brand-light sm:text-8xl">404</span>
+          <Tire class="h-20 w-20 animate-spin-slow sm:h-24 sm:w-24" />
+        </div>
+        <h1 class="heading mt-6 text-4xl sm:text-5xl">This road’s a dead end.</h1>
+        <p class="mt-4 max-w-lg text-lg text-white/70">
+          The page you’re after isn’t here — but {site.stockCount}+ tires are. Search
+          your size or head back to the shop.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/" class="btn-primary">
+            <Icon name="arrow" class="h-5 w-5 rotate-180" />
+            Back home
+          </a>
+          <a href="/shop" class="btn-outline">Shop tires</a>
+        </div>
+        <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {
+            links.map((l) => (
+              <li>
+                <a href={l.href} class="font-semibold text-white/70 underline-offset-4 hover:text-brand-light hover:underline">
+                  {l.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div class="lg:pl-6">
+        <SizeFinder variant="dark" />
+      </div>
+    </div>
+  </section>
+</Layout>

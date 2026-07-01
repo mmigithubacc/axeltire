@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHeader from '../components/PageHeader.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import ProductCard from '../components/ProductCard.astro';
 import ProductSchema from '../components/ProductSchema.astro';
 import SizeFinder from '../components/SizeFinder.astro';
@@ -20,6 +21,8 @@ const minPrice = Math.min(...products.map((p) => p.price));
     on our floor right now. Get {delivery.minTires}+ tires delivered anywhere in
     {site.city}.
   </PageHeader>
+
+  <Breadcrumbs items={[{ label: 'Shop tires', href: '/shop' }]} />
 
   <section class="section bg-mist">
     <div class="container-px grid gap-8 lg:grid-cols-[300px_1fr]">
