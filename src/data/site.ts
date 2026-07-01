@@ -19,13 +19,24 @@ export const site = {
   province: 'AB',
   country: 'Canada',
   stockCount: 750,
+  // Approximate city-level geo for structured data (exact address TBC).
+  geo: { lat: 53.5461, lng: -113.4938 },
+} as const;
+
+/** Tire delivery offer — min. 2-tire order, anywhere in Edmonton. */
+export const delivery = {
+  minTires: 2,
+  area: 'Edmonton',
+  short: 'Tire delivery in Edmonton — 2-tire minimum',
+  blurb:
+    'Order 2 or more tires and we’ll deliver to any address in Edmonton. Same all-in pricing, brought to your door.',
 } as const;
 
 /** Rotating messages shown in the announcement bar. */
 export const announcements = [
-  'Edmonton warehouse · 750 in stock',
+  '750 tires in stock — Edmonton',
+  'Delivery in Edmonton · 2-tire minimum',
   'Free install on 4',
-  'Mon–Sat',
   'Wholesale dealers welcome',
 ] as const;
 
@@ -33,6 +44,27 @@ export const hours = [
   { day: 'Mon–Fri', time: '8:00 AM – 6:00 PM' },
   { day: 'Saturday', time: '9:00 AM – 4:00 PM' },
   { day: 'Sunday', time: 'Closed' },
+] as const;
+
+/** Machine-readable hours for schema.org openingHoursSpecification. */
+export const openingHoursSchema = [
+  {
+    days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    opens: '08:00',
+    closes: '18:00',
+  },
+  { days: ['Saturday'], opens: '09:00', closes: '16:00' },
+] as const;
+
+/** Cities/areas served — used in LocalBusiness schema + local SEO copy. */
+export const areaServed = [
+  'Edmonton',
+  'Sherwood Park',
+  'St. Albert',
+  'Leduc',
+  'Spruce Grove',
+  'Nisku',
+  'Beaumont',
 ] as const;
 
 /** Primary navigation. */

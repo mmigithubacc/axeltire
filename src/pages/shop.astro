@@ -2,20 +2,23 @@
 import Layout from '../layouts/Layout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import ProductCard from '../components/ProductCard.astro';
+import ProductSchema from '../components/ProductSchema.astro';
 import SizeFinder from '../components/SizeFinder.astro';
 import { products } from '../data/products';
-import { site } from '../data/site';
+import { site, delivery } from '../data/site';
 
 const seasons = ['All', ...new Set(products.map((p) => p.season))];
+const minPrice = Math.min(...products.map((p) => p.price));
 ---
 
 <Layout
-  title="Shop tires"
-  description="Browse live Edmonton tire inventory with all-in pricing — tire, install, balance and disposal in one number."
+  title={`Shop Tires in ${site.city} — ${site.stockCount}+ In Stock`}
+  description={`Browse ${site.stockCount}+ tires in stock in ${site.city} with all-in pricing from $${minPrice}. Search by size, book same-day install, or get 2+ tires delivered.`}
 >
   <PageHeader eyebrow="Live · Edmonton stock" title="Shop tires.">
     Every price is all-in — tire, install, balance and disposal. What you see is
-    on our floor right now.
+    on our floor right now. Get {delivery.minTires}+ tires delivered anywhere in
+    {site.city}.
   </PageHeader>
 
   <section class="section bg-mist">
@@ -110,4 +113,6 @@ const seasons = ['All', ...new Set(products.map((p) => p.season))];
 
     if (initialSize) apply();
   </script>
+
+  <ProductSchema products={products} />
 </Layout>

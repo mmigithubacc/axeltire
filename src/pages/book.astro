@@ -26,6 +26,11 @@ const infoCards = [
     body: 'We don’t pitch brake jobs you don’t need.',
     icon: 'check',
   },
+  {
+    title: 'Delivery',
+    body: `Prefer not to come in? Order 2+ tires and we deliver anywhere in ${site.city}.`,
+    icon: 'truck',
+  },
 ];
 
 // Prefill the fallback email so the mailto is ready to send.
@@ -37,8 +42,8 @@ const mailto = `mailto:${site.email}?subject=${mailSubject}&body=${mailBody}`;
 ---
 
 <Layout
-  title="Book install"
-  description="Book a tire install in Edmonton. Walk-ins accepted, booked appointments cut the wait — average 48 min on a 4-tire job."
+  title="Book Tire Installation in Edmonton"
+  description="Book same-day tire installation in Edmonton. Walk-ins welcome — a 4-tire job averages 48 minutes. All-in pricing, no upsells."
 >
   <PageHeader eyebrow="Book install" title="Pick a time.">
     Walk-ins accepted. Booked appointments cut the wait — average 48 min on a
