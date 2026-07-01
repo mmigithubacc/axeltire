@@ -51,3 +51,34 @@ refresh, and become the static baseline on the next deploy.
 - `/shop` — builds from `getTires()`, refreshes live stock, writes orders.
 - `/track` — looks up an order by reference (cross-device).
 - `/admin` — email-login back office for stock + orders.
+
+## Online payments (Stripe)
+
+Customers can pay by card (Visa, Mastercard, Amex, debit) via Stripe Checkout.
+Card entry happens on Stripe's secure hosted page; the site never handles card
+data. Prices are recomputed server-side so totals can't be tampered with.
+
+### Setup
+1. Create a Stripe account (stripe.com) → Developers → API keys.
+2. Add these env vars in Vercel (then redeploy):
+   - `PUBLIC_STRIPE_PUBLISHABLE_KEY` — `pk_…` (public; enables the "Pay online" option)
+   - `STRIPE_SECRET_KEY` — `sk_…` (**secret, server only**)
+   - `SUPABASE_SERVICE_ROLE_KEY` — Supabase → Settings → API → `service_role`
+     (**secret, server only** — lets the payment function mark orders paid)
+3. That's it — no Stripe webhook needed. Payment is verified on the return
+   redirect (`/api/order-complete`) before the order is marked **Paid**.
+
+### Flow
+- `/shop` checkout → "Pay online" → `POST /api/create-checkout` creates a
+  pending order + a Stripe session → customer pays on Stripe → returns to
+  `/api/order-complete`, which verifies the session and marks the order **Paid**,
+  then sends the customer to `/account`.
+- "Pay on delivery/pickup" still works with no card — the order is saved as
+  **Requested**.
+
+### Notes
+- These `/api/*` routes are serverless functions (via the Vercel adapter). They
+  require a host that runs server functions — Vercel (incl. the custom
+  axeltire.ca domain) works; a purely static host would not run payments.
+- Use Stripe **test** keys (`pk_test`/`sk_test`) to trial with card 4242 4242
+  4242 4242, then swap to live keys.
