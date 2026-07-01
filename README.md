@@ -28,6 +28,26 @@ npm run build    # build the static site to ./dist
 npm run preview  # preview the production build locally
 ```
 
+## Deploying to Vercel
+
+This is a static Astro site, so Vercel deploys it with zero configuration:
+
+1. In Vercel, **Add New → Project** and import `mmigithubacc/axeltire`.
+2. Vercel auto-detects Astro and fills in the settings:
+   - **Framework preset:** Astro
+   - **Build command:** `astro build` (or `npm run build`)
+   - **Output directory:** `dist`
+   - **Install command:** `npm install`
+3. Deploy. Vercel builds the default branch as production and gives every
+   push a preview URL.
+
+No adapter is required — the site is fully static (`output: "static"`). Add
+`@astrojs/vercel` only if you later need server-side rendering or ISR.
+
+After deploying, point the `axeltire.ca` domain at the Vercel project and
+confirm `site` in `astro.config.mjs` matches the production URL (used for
+canonical + Open Graph links).
+
 ## Editing content
 
 All business copy lives in two files so the site can be updated without
