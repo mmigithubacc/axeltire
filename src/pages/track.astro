@@ -1,0 +1,113 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../data/site';
+---
+
+<Layout
+  title="Track an order"
+  description="Track your Axel Tires order in Edmonton. Enter your order reference to see status, items and delivery."
+  noindex
+>
+  <PageHeader eyebrow="Orders" title="Track an order.">
+    Enter your order reference (e.g. <span class="font-mono">AX-123456</span>) to see
+    its status. Orders you place on this device show up here automatically.
+  </PageHeader>
+
+  <Breadcrumbs items={[{ label: 'Track an order', href: '/track' }]} />
+
+  <section class="bg-mist py-10 sm:py-14">
+    <div class="container-px max-w-4xl">
+      <!-- Search -->
+      <div class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+        <label class="block">
+          <span class="text-xs font-bold uppercase tracking-widest text-steel">Order search</span>
+          <div class="mt-1.5 flex gap-2">
+            <div class="relative flex-1">
+              <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center">
+                <Icon name="search" class="h-5 w-5 text-steel" />
+              </span>
+              <input id="q" type="text" autocomplete="off" placeholder="Enter order reference — e.g. AX-123456"
+                class="w-full rounded-lg border border-black/10 py-3 pl-11 pr-4 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30" />
+            </div>
+            <button type="button" id="clear" class="rounded-lg border border-black/15 px-5 py-3 text-sm font-semibold text-steel hover:bg-mist">Clear</button>
+          </div>
+        </label>
+      </div>
+
+      <!-- Column header -->
+      <div class="mt-6 hidden rounded-t-xl bg-ink px-5 py-3 text-xs font-bold uppercase tracking-widest text-white/70 sm:grid sm:grid-cols-[150px_1fr_110px_130px] sm:gap-4">
+        <span>Order #</span><span>Items</span><span>Total</span><span class="text-right">Status</span>
+      </div>
+
+      <div id="orders" class="overflow-hidden rounded-b-xl border border-black/10 bg-white sm:border-t-0"></div>
+
+      <div id="empty" class="rounded-xl border border-dashed border-black/15 bg-white p-10 text-center text-steel">
+        <p class="font-semibold text-ink">No orders on this device yet.</p>
+        <p class="mt-1.5 text-sm">
+          Place an order from the <a href="/shop" class="font-semibold text-brand">catalog</a> and it’ll appear here.
+          Already ordered from another device? Email
+          <a href={`mailto:${site.email}`} class="font-semibold text-brand">{site.email}</a> with your reference and we’ll send the status.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    type Item = { sku: string; name: string; size: string; price: number; qty: number };
+    type Order = { ref: string; date: string; items: Item[]; total: number; status: string };
+
+    const ordersEl = document.getElementById('orders')!;
+    const emptyEl = document.getElementById('empty')!;
+    const q = document.getElementById('q') as HTMLInputElement;
+    const all: Order[] = (() => {
+      try { return JSON.parse(localStorage.getItem('axel-orders') || '[]'); } catch { return []; }
+    })();
+
+    const fmtDate = (iso: string) => {
+      const d = new Date(iso);
+      return isNaN(+d) ? '' : d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: '2-digit' });
+    };
+
+    function render(list: Order[]) {
+      if (!list.length) {
+        ordersEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      ordersEl.innerHTML = list.map((o) => {
+        const qty = o.items.reduce((n, i) => n + i.qty, 0);
+        const summary = o.items.map((i) => `${i.qty}× ${i.name} ${i.size}`).join(', ');
+        return `
+          <div class="grid grid-cols-1 gap-2 border-b border-black/[0.06] px-5 py-4 last:border-0 sm:grid-cols-[150px_1fr_110px_130px] sm:items-center sm:gap-4">
+            <div>
+              <p class="font-mono font-bold text-ink">${o.ref}</p>
+              <p class="text-[11px] text-steel">${fmtDate(o.date)}</p>
+            </div>
+            <div class="text-sm text-steel"><span class="font-semibold text-ink">${qty} tire${qty === 1 ? '' : 's'}</span> · ${summary}</div>
+            <div class="font-display text-xl font-bold text-ink">$${o.total.toLocaleString()}</div>
+            <div class="sm:text-right">
+              <span class="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-700">
+                <span class="h-2 w-2 rounded-full bg-amber-500"></span>${o.status}
+              </span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function filter() {
+      const term = q.value.trim().toLowerCase();
+      render(!term ? all : all.filter((o) => o.ref.toLowerCase().includes(term)));
+    }
+    q.addEventListener('input', filter);
+    document.getElementById('clear')!.addEventListener('click', () => { q.value = ''; filter(); });
+
+    // Deep link: /track?ref=AX-123456
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref) q.value = ref;
+    filter();
+  </script>
+</Layout>

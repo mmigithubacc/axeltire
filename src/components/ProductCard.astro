@@ -38,7 +38,7 @@ const inStock = product.stock > 0;
   <div class="mt-5 flex items-end justify-between border-t border-black/5 pt-4">
     <div>
       <span class="font-display text-3xl font-bold text-ink">${product.price}</span>
-      <span class="block text-[11px] font-medium text-steel">all-in · per tire · {site.currency}</span>
+      <span class="block text-[11px] font-medium text-steel">per tire · {site.currency}</span>
     </div>
     <span
       class:list={[
@@ -52,9 +52,9 @@ const inStock = product.stock > 0;
   </div>
 
   <a
-    href="/book"
+    href="/shop"
     class="btn-dark mt-5 w-full py-2.5 text-sm group-hover:bg-brand group-hover:text-white"
   >
-    Add & book install
+    View &amp; order
   </a>
 </article>

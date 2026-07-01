@@ -1,37 +1,56 @@
 /**
- * Product / inventory data.
+ * Tire inventory.
  *
- * In production this would be sourced from the live inventory system. For the
- * static marketing site it is a typed list so the shop grid and featured
- * section render real sizes, prices and stock levels.
+ * The catalog reads from `inventory.json` — a single, machine-writable data
+ * file. This is deliberately the ONE place stock lives, so a back-office
+ * (git CMS, spreadsheet sync, or a database export) can regenerate it without
+ * touching any page or component code.
  */
+import inventoryData from './inventory.json';
+
+export type Season = 'Winter' | 'All-Weather' | 'All-Season' | 'Summer';
 
 export type Product = {
   id: string;
+  sku: string;
   brand: string;
   model: string;
-  name: string;
   size: string;
-  season: 'Winter' | 'All-Season' | 'Summer' | 'All-Weather';
-  price: number; // all-in price in CAD
-  stock: number; // units on the floor
+  season: Season;
+  loadIndex: string;
+  speedRating: string;
+  price: number; // Axel retail price (CAD)
+  msrp: number; // suggested retail, used to show savings
+  stock: number; // units on hand; 0 = call for availability
   bestSeller?: boolean;
+  onSale?: boolean;
+  runFlat?: boolean;
+  studdable?: boolean;
+  ev?: boolean;
+  ply?: string; // e.g. "10PR" for LT tires
+  /** Supplier FOB cost (USD). Build-time only — never rendered to the page. */
+  fobUsd?: number;
 };
+
+export const products = inventoryData as unknown as Product[];
 
 /** Stock levels display as "12+" once they hit this threshold. */
 export const STOCK_CAP = 12;
 
-export const products: Product[] = [
-  { id: 'hd617-225-60r17', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '225/60R17', season: 'Winter', price: 114, stock: 14, bestSeller: true },
-  { id: 'hd617-205-55r16', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '205/55R16', season: 'Winter', price: 88, stock: 18 },
-  { id: 'hd617-215-60r16', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '215/60R16', season: 'Winter', price: 101, stock: 16 },
-  { id: 'hd617-215-55r17', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '215/55R17', season: 'Winter', price: 102, stock: 13 },
-  { id: 'hd617-235-65r17', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '235/65R17', season: 'Winter', price: 126, stock: 12 },
-  { id: 'hd617-225-55r17', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '225/55R17', season: 'Winter', price: 101, stock: 15 },
-  { id: 'hd617-225-65r17', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '225/65R17', season: 'Winter', price: 114, stock: 20 },
-  { id: 'hd617-235-55r17', brand: 'HAIDA', model: 'HD617', name: 'Winter HD617', size: '235/55R17', season: 'Winter', price: 114, stock: 12 },
-];
-
-/** Format a unit count for display ("12+" once capped). */
+/** Format a unit count for the "on hand" column. */
 export const formatStock = (n: number): string =>
-  n >= STOCK_CAP ? `${STOCK_CAP}+` : String(n);
+  n <= 0 ? 'Call' : n >= STOCK_CAP ? `${STOCK_CAP}+` : String(n);
+
+/** Digits-only size code used by the search box (205/55R16 -> "2055516"). */
+export const sizeCode = (size: string): string => size.replace(/\D/g, '');
+
+/** Distinct brands, for the manufacturer filter. */
+export const brandsInStock: string[] = [
+  ...new Set(products.map((p) => p.brand)),
+].sort();
+
+/** Distinct seasons present in inventory, in a sensible display order. */
+const SEASON_ORDER: Season[] = ['Winter', 'All-Weather', 'All-Season', 'Summer'];
+export const seasonsInStock: Season[] = SEASON_ORDER.filter((s) =>
+  products.some((p) => p.season === s),
+);
