@@ -1,0 +1,259 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { isSupabaseConfigured } from '../lib/supabase';
+---
+
+<Layout title="Admin" noindex>
+  <section class="bg-mist py-10 sm:py-14">
+    <div class="container-px max-w-6xl">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p class="eyebrow">Back office</p>
+          <h1 class="heading text-4xl">Manage stock &amp; orders.</h1>
+        </div>
+        <button id="signout" class="hidden rounded-lg border border-black/15 px-4 py-2 text-sm font-semibold text-steel hover:bg-white">
+          Sign out
+        </button>
+      </div>
+
+      {!isSupabaseConfigured && (
+        <div class="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-6 text-amber-900">
+          <p class="font-semibold">Database not connected yet.</p>
+          <p class="mt-1 text-sm">
+            Add <code class="font-mono">PUBLIC_SUPABASE_URL</code> and
+            <code class="font-mono">PUBLIC_SUPABASE_ANON_KEY</code> in Vercel →
+            Environment Variables, then redeploy. See <code class="font-mono">docs/BACKEND.md</code>.
+          </p>
+        </div>
+      )}
+
+      <!-- Login -->
+      <form id="login" class="mt-8 hidden max-w-sm rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
+        <h2 class="heading text-xl text-ink">Sign in</h2>
+        <label class="mt-4 block">
+          <span class="text-sm font-semibold text-ink">Email</span>
+          <input name="email" type="email" required class="form-field" />
+        </label>
+        <label class="mt-3 block">
+          <span class="text-sm font-semibold text-ink">Password</span>
+          <input name="password" type="password" required class="form-field" />
+        </label>
+        <p id="login-error" class="mt-3 hidden text-sm font-medium text-brand"></p>
+        <button type="submit" class="btn-primary mt-5 w-full">Sign in</button>
+      </form>
+
+      <!-- App -->
+      <div id="app" class="mt-8 hidden">
+        <div class="flex gap-2">
+          <button data-tab="stock" class="tab-btn is-active">Stock</button>
+          <button data-tab="orders" class="tab-btn">Orders</button>
+        </div>
+
+        <!-- Stock -->
+        <div id="panel-stock" class="mt-5">
+          <div class="rounded-2xl border border-black/10 bg-white p-5">
+            <h3 class="heading text-lg text-ink">Add a tire</h3>
+            <form id="add-tire" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <input name="brand" placeholder="Brand" required class="form-field" />
+              <input name="model" placeholder="Model / pattern" required class="form-field" />
+              <input name="size" placeholder="Size e.g. 205/55R16" required class="form-field" />
+              <select name="season" class="form-field">
+                <option>Winter</option><option>All-Season</option><option>All-Weather</option><option>Summer</option>
+              </select>
+              <input name="price" type="number" placeholder="Price $" required class="form-field" />
+              <input name="msrp" type="number" placeholder="MSRP $" class="form-field" />
+              <input name="stock" type="number" placeholder="Stock" value="12" class="form-field" />
+              <button type="submit" class="btn-dark">Add tire</button>
+            </form>
+          </div>
+
+          <p id="stock-status" class="mt-3 text-sm text-steel"></p>
+          <div id="tires" class="mt-3 space-y-2"></div>
+        </div>
+
+        <!-- Orders -->
+        <div id="panel-orders" class="mt-5 hidden">
+          <p id="orders-status" class="text-sm text-steel"></p>
+          <div id="orders" class="mt-3 space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .tab-btn { border-radius: 0.6rem; border: 1px solid rgba(0,0,0,0.1); background: #fff; padding: 0.5rem 1.1rem; font-weight: 600; font-size: 0.9rem; color: var(--color-steel); }
+    .tab-btn.is-active { background: var(--color-ink); color: #fff; border-color: var(--color-ink); }
+  </style>
+
+  <script>
+    import { getSupabase } from '../lib/supabase';
+    const sb = getSupabase();
+
+    const $ = (id: string) => document.getElementById(id)!;
+    const loginForm = $('login') as HTMLFormElement;
+    const app = $('app');
+    const signout = $('signout');
+
+    if (!sb) {
+      // Not configured — the amber notice is already shown server-side.
+    } else {
+      init();
+    }
+
+    async function init() {
+      const { data } = await sb!.auth.getSession();
+      data.session ? showApp() : showLogin();
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = new FormData(loginForm);
+        const err = $('login-error');
+        err.classList.add('hidden');
+        const { error } = await sb!.auth.signInWithPassword({
+          email: String(f.get('email')),
+          password: String(f.get('password')),
+        });
+        if (error) {
+          err.textContent = error.message;
+          err.classList.remove('hidden');
+        } else {
+          showApp();
+        }
+      });
+
+      signout.addEventListener('click', async () => {
+        await sb!.auth.signOut();
+        location.reload();
+      });
+
+      // Tabs
+      document.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach((b) =>
+        b.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach((x) => x.classList.remove('is-active'));
+          b.classList.add('is-active');
+          $('panel-stock').classList.toggle('hidden', b.dataset.tab !== 'stock');
+          $('panel-orders').classList.toggle('hidden', b.dataset.tab !== 'orders');
+        }),
+      );
+
+      ($('add-tire') as HTMLFormElement).addEventListener('submit', addTire);
+    }
+
+    function showLogin() { loginForm.classList.remove('hidden'); }
+    function showApp() {
+      loginForm.classList.add('hidden');
+      app.classList.remove('hidden');
+      signout.classList.remove('hidden');
+      loadTires();
+      loadOrders();
+    }
+
+    // ---- Stock ----
+    async function loadTires() {
+      const status = $('stock-status');
+      status.textContent = 'Loading…';
+      const { data, error } = await sb!.from('tires').select('*').order('brand').order('size');
+      if (error) { status.textContent = error.message; return; }
+      status.textContent = `${data!.length} tires`;
+      $('tires').innerHTML = data!.map(tireRow).join('');
+      $('tires').querySelectorAll<HTMLButtonElement>('[data-save]').forEach((b) =>
+        b.addEventListener('click', () => saveTire(b.dataset.save!)),
+      );
+      $('tires').querySelectorAll<HTMLButtonElement>('[data-del]').forEach((b) =>
+        b.addEventListener('click', () => deleteTire(b.dataset.del!)),
+      );
+    }
+
+    function tireRow(t: any) {
+      const margin = t.fob_usd ? `cost ~$${(t.fob_usd * 1.37).toFixed(0)} CAD` : '';
+      return `<div class="grid grid-cols-2 items-center gap-2 rounded-xl border border-black/10 bg-white p-3 md:grid-cols-[1fr_90px_90px_90px_110px_80px]">
+        <div class="col-span-2 md:col-span-1">
+          <p class="font-semibold text-ink">${t.brand} <span class="font-normal text-steel">${t.model}</span></p>
+          <p class="font-mono text-[11px] text-steel">${t.size} · ${t.sku} <span class="text-emerald-600">${margin}</span></p>
+        </div>
+        <label class="text-[11px] text-steel">Price<input type="number" value="${t.price}" data-f="price" class="form-field !mt-0 !py-1.5" /></label>
+        <label class="text-[11px] text-steel">MSRP<input type="number" value="${t.msrp}" data-f="msrp" class="form-field !mt-0 !py-1.5" /></label>
+        <label class="text-[11px] text-steel">Stock<input type="number" value="${t.stock}" data-f="stock" class="form-field !mt-0 !py-1.5" /></label>
+        <label class="flex items-center gap-1.5 text-[11px] text-steel"><input type="checkbox" data-f="on_sale" ${t.on_sale ? 'checked' : ''}/> On sale</label>
+        <div class="flex gap-1" data-row="${t.id}">
+          <button class="rounded-md bg-ink px-2.5 py-1.5 text-xs font-semibold text-white" data-save="${t.id}">Save</button>
+          <button class="rounded-md border border-black/15 px-2 py-1.5 text-xs text-steel" data-del="${t.id}">✕</button>
+        </div>
+      </div>`;
+    }
+
+    async function saveTire(id: string) {
+      const row = document.querySelector(`[data-row="${id}"]`)!.closest('.grid')!;
+      const get = (f: string) => row.querySelector<HTMLInputElement>(`[data-f="${f}"]`)!;
+      const patch = {
+        price: +get('price').value,
+        msrp: +get('msrp').value,
+        stock: +get('stock').value,
+        on_sale: get('on_sale').checked,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await sb!.from('tires').update(patch).eq('id', id);
+      $('stock-status').textContent = error ? error.message : `Saved ${id} ✓`;
+    }
+
+    async function deleteTire(id: string) {
+      if (!confirm('Delete this tire?')) return;
+      const { error } = await sb!.from('tires').delete().eq('id', id);
+      if (error) { $('stock-status').textContent = error.message; return; }
+      loadTires();
+    }
+
+    async function addTire(e: Event) {
+      e.preventDefault();
+      const form = e.target as HTMLFormElement;
+      const f = new FormData(form);
+      const brand = String(f.get('brand'));
+      const model = String(f.get('model'));
+      const size = String(f.get('size'));
+      const code = size.replace(/\D/g, '');
+      const row = {
+        id: `${brand}-${model}-${code}`.toLowerCase().replace(/\s+/g, '-'),
+        sku: `${brand.slice(0, 2).toUpperCase()}-${model.replace(/\s+/g, '')}-${code}`,
+        brand, model, size,
+        season: String(f.get('season')),
+        price: +f.get('price')!,
+        msrp: +(f.get('msrp') || 0),
+        stock: +(f.get('stock') || 0),
+      };
+      const { error } = await sb!.from('tires').upsert(row);
+      if (error) { $('stock-status').textContent = error.message; return; }
+      form.reset();
+      loadTires();
+    }
+
+    // ---- Orders ----
+    async function loadOrders() {
+      const status = $('orders-status');
+      const { data, error } = await sb!.from('orders').select('*').order('created_at', { ascending: false });
+      if (error) { status.textContent = error.message; return; }
+      status.textContent = `${data!.length} orders`;
+      $('orders').innerHTML = data!.map(orderRow).join('') || '<p class="text-steel">No orders yet.</p>';
+      $('orders').querySelectorAll<HTMLSelectElement>('[data-status]').forEach((s) =>
+        s.addEventListener('change', () => setStatus(s.dataset.status!, s.value)),
+      );
+    }
+
+    function orderRow(o: any) {
+      const items = (o.items || []).map((i: any) => `${i.qty}× ${i.name} ${i.size}`).join(', ');
+      const date = new Date(o.created_at).toLocaleDateString('en-CA', { month: 'short', day: '2-digit', year: 'numeric' });
+      const opts = ['Requested', 'Confirmed', 'Delivered', 'Cancelled']
+        .map((s) => `<option ${s === o.status ? 'selected' : ''}>${s}</option>`).join('');
+      return `<div class="grid grid-cols-1 gap-2 rounded-xl border border-black/10 bg-white p-3 sm:grid-cols-[130px_1fr_90px_140px] sm:items-center">
+        <div><p class="font-mono font-bold text-ink">${o.ref}</p><p class="text-[11px] text-steel">${date}</p></div>
+        <div class="text-sm text-steel">${items}</div>
+        <div class="font-display text-lg font-bold text-ink">$${o.total}</div>
+        <select data-status="${o.ref}" class="form-field !mt-0 !py-1.5">${opts}</select>
+      </div>`;
+    }
+
+    async function setStatus(ref: string, status: string) {
+      const { error } = await sb!.from('orders').update({ status }).eq('ref', ref);
+      $('orders-status').textContent = error ? error.message : `Updated ${ref} → ${status}`;
+    }
+  </script>
+</Layout>

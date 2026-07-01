@@ -4,14 +4,14 @@ import PageHeader from '../components/PageHeader.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import ProductSchema from '../components/ProductSchema.astro';
 import Icon from '../components/Icon.astro';
-import {
-  products,
-  brandsInStock,
-  seasonsInStock,
-  formatStock,
-  sizeCode,
-} from '../data/products';
+import { formatStock, sizeCode } from '../data/products';
+import { getTires, brandsOf, seasonsOf } from '../lib/inventory';
 import { site, delivery } from '../data/site';
+
+// Live from Supabase when configured, else the bundled inventory.json.
+const products = await getTires();
+const brandsInStock = brandsOf(products);
+const seasonsInStock = seasonsOf(products);
 
 const minPrice = Math.min(...products.map((p) => p.price));
 
@@ -190,7 +190,7 @@ const flagsOf = (p: (typeof products)[number]) =>
                   </span>
                 </div>
 
-                <div>
+                <div class="stock-cell" data-id={p.id}>
                   {out ? (
                     <span class="inline-flex items-center gap-1.5 rounded-md bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
                       Call for availability
@@ -466,6 +466,22 @@ const flagsOf = (p: (typeof products)[number]) =>
         localStorage.setItem('axel-orders', JSON.stringify(hist.slice(0, 50)));
       } catch {}
 
+      // Persist to Supabase so the shop sees it in /admin (and /track works cross-device).
+      const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+      const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+      if (SB_URL && SB_KEY) {
+        fetch(`${SB_URL}/rest/v1/orders`, {
+          method: 'POST',
+          headers: {
+            apikey: SB_KEY,
+            Authorization: `Bearer ${SB_KEY}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ ref, items, total, status: 'Requested' }),
+        }).catch(() => {});
+      }
+
       const body = [
         `Order reference: ${ref}`,
         '',
@@ -485,5 +501,31 @@ const flagsOf = (p: (typeof products)[number]) =>
     // Hydrate existing order on load.
     rows.forEach((r) => order[r.dataset.id!] && renderCell(r.dataset.id!));
     renderBar();
+
+    // Live stock: refresh on-hand counts + prices from Supabase after load.
+    const SB_URL = import.meta.env.PUBLIC_SUPABASE_URL;
+    const SB_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+    if (SB_URL && SB_KEY) {
+      fetch(`${SB_URL}/rest/v1/tires_public?select=id,stock,price,msrp`, {
+        headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+      })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((live: { id: string; stock: number; price: number; msrp: number }[]) => {
+          live.forEach((t) => {
+            const row = document.querySelector<HTMLElement>(`.trow[data-id="${t.id}"]`);
+            if (!row) return;
+            row.dataset.stock = String(t.stock);
+            row.dataset.price = String(t.price);
+            const cell = row.querySelector<HTMLElement>('.stock-cell');
+            if (cell) {
+              cell.innerHTML =
+                t.stock <= 0
+                  ? '<span class="inline-flex items-center gap-1.5 rounded-md bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">Call for availability</span>'
+                  : `<span class="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>${t.stock >= 12 ? '12+' : t.stock} on hand</span>`;
+            }
+          });
+        })
+        .catch(() => {});
+    }
   </script>
 </Layout>
