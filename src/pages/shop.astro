@@ -587,15 +587,27 @@ const flagsOf = (p: (typeof products)[number]) =>
         submitBtn.disabled = true;
         submitBtn.textContent = 'Redirecting…';
         const { data: { session } } = await supabase!.auth.getSession();
-        const res = await fetch('/api/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            items: items.map((i) => ({ sku: i.sku, qty: i.qty })),
-            customer,
-            token: session?.access_token,
-          }),
-        }).then((r) => r.json()).catch(() => ({ error: 'Network error.' }));
+        let res: { url?: string; error?: string };
+        try {
+          const r = await fetch('/api/create-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: items.map((i) => ({ sku: i.sku, qty: i.qty })),
+              customer,
+              token: session?.access_token,
+            }),
+          });
+          const text = await r.text();
+          try {
+            res = JSON.parse(text);
+          } catch {
+            // Non-JSON = the function isn't deployed (404) or crashed (500).
+            res = { error: `Payment endpoint error ${r.status}. ${r.status === 404 ? 'The payment function isn’t deployed.' : 'Please try again.'}` };
+          }
+        } catch {
+          res = { error: 'Network error — please check your connection and try again.' };
+        }
         if (res?.url) { location.href = res.url; return; }
         err.textContent = res?.error || 'Could not start payment.';
         err.classList.remove('hidden');
