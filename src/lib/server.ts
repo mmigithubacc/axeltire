@@ -19,7 +19,9 @@ const SERVICE_ROLE = env('SUPABASE_SERVICE_ROLE_KEY');
 const SUPABASE_URL = env('PUBLIC_SUPABASE_URL');
 export const ANON_KEY = env('PUBLIC_SUPABASE_ANON_KEY');
 
-export const isPaymentsConfigured = Boolean(STRIPE_SECRET && SERVICE_ROLE && SUPABASE_URL);
+// Checkout only needs Stripe + Supabase URL/anon (it acts as the signed-in
+// customer). The service role is used only to mark orders Paid afterwards.
+export const isPaymentsConfigured = Boolean(STRIPE_SECRET && SUPABASE_URL && ANON_KEY);
 
 export const stripe = STRIPE_SECRET ? new Stripe(STRIPE_SECRET) : null;
 
@@ -29,15 +31,13 @@ export function adminDb(): SupabaseClient | null {
   return createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 }
 
-/** Verify a customer's access token and return their user (or null). */
-export async function userFromToken(token?: string) {
-  if (!SUPABASE_URL || !ANON_KEY || !token) return null;
-  const c = createClient(SUPABASE_URL, ANON_KEY, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
+/** A Supabase client acting as the signed-in customer (their access token). */
+export function authedClient(token?: string): SupabaseClient | null {
+  if (!SUPABASE_URL || !ANON_KEY) return null;
+  return createClient(SUPABASE_URL, ANON_KEY, {
+    global: { headers: token ? { Authorization: `Bearer ${token}` } : {} },
     auth: { persistSession: false },
   });
-  const { data } = await c.auth.getUser();
-  return data.user ?? null;
 }
 
 export const jsonResponse = (data: unknown, status = 200) =>

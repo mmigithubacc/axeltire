@@ -1,9 +1,13 @@
 /**
  * Creates a Stripe Checkout Session for the current cart.
- * Prices are recomputed from the database — client amounts are never trusted.
+ *
+ * Runs as the signed-in customer (their access token), so it reads prices from
+ * the public catalog view and records the pending order under RLS — no
+ * service-role key required. Prices are recomputed here; client amounts are
+ * never trusted.
  */
 import type { APIRoute } from 'astro';
-import { stripe, adminDb, userFromToken, isPaymentsConfigured, jsonResponse } from '../../lib/server';
+import { stripe, authedClient, isPaymentsConfigured, jsonResponse } from '../../lib/server';
 
 export const prerender = false;
 
@@ -18,19 +22,22 @@ export const POST: APIRoute = async ({ request }) => {
     return jsonResponse({ error: 'Your cart is empty.' }, 400);
   }
 
-  // Require a signed-in customer.
-  const user = await userFromToken(body?.token);
-  if (!user) return jsonResponse({ error: 'Please sign in to pay.' }, 401);
-
-  const db = adminDb();
+  const db = authedClient(body?.token);
   if (!db) return jsonResponse({ error: 'Server not configured.' }, 503);
 
-  // Recompute prices from the DB (anti-tampering).
-  const skus = cart.map((i) => i.sku);
-  const { data: tires } = await db
-    .from('tires')
+  // Require a signed-in customer.
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return jsonResponse({ error: 'Please sign in to pay.' }, 401);
+
+  // Recompute prices from the public catalog view (anti-tampering).
+  const skus = cart.map((i) => i.sku).filter(Boolean);
+  const { data: tires, error: lookupError } = await db
+    .from('tires_public')
     .select('sku, brand, model, size, price, stock')
     .in('sku', skus);
+  if (lookupError) {
+    return jsonResponse({ error: `Price lookup failed: ${lookupError.message}` }, 500);
+  }
   const bySku = new Map((tires ?? []).map((t: any) => [t.sku, t]));
 
   const lineItems: any[] = [];
@@ -51,15 +58,23 @@ export const POST: APIRoute = async ({ request }) => {
     });
     orderItems.push({ sku: t.sku, name: `${t.brand} ${t.model}`, size: t.size, price: t.price, qty });
   }
-  if (lineItems.length === 0) return jsonResponse({ error: 'No purchasable items in cart.' }, 400);
+  if (lineItems.length === 0) {
+    return jsonResponse(
+      { error: `No purchasable items (requested ${skus.length}, matched ${tires?.length ?? 0}).` },
+      400,
+    );
+  }
 
   const ref = 'AX-' + String(Date.now()).slice(-6);
   const customer = body?.customer ?? {};
 
-  // Record a pending order (service role bypasses RLS).
-  await db.from('orders').insert({
+  // Record a pending order as this customer (RLS: user_id = auth.uid()).
+  const { error: insertError } = await db.from('orders').insert({
     ref, user_id: user.id, items: orderItems, total, status: 'Pending payment', customer,
   });
+  if (insertError) {
+    return jsonResponse({ error: `Could not save order: ${insertError.message}` }, 500);
+  }
 
   const origin = new URL(request.url).origin;
   const session = await stripe.checkout.sessions.create({
