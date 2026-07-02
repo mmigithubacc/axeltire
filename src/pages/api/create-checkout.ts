@@ -12,6 +12,15 @@ import { stripe, authedClient, isPaymentsConfigured, jsonResponse } from '../../
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
+  try {
+    return await handler(request);
+  } catch (e: any) {
+    // Never let an exception return an HTML crash page — surface the reason.
+    return jsonResponse({ error: `Checkout failed: ${e?.message || 'unknown error'}` }, 500);
+  }
+};
+
+async function handler(request: Request): Promise<Response> {
   if (!isPaymentsConfigured || !stripe) {
     return jsonResponse({ error: 'Online payment is not enabled yet.' }, 503);
   }
@@ -87,4 +96,4 @@ export const POST: APIRoute = async ({ request }) => {
   });
 
   return jsonResponse({ url: session.url });
-};
+}
