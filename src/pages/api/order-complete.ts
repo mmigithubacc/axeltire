@@ -15,6 +15,9 @@ export const GET: APIRoute = async ({ request, redirect }) => {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const ref = session.metadata?.ref;
     if (session.payment_status === 'paid' && ref) {
+      // Mark the order Paid (needs service role to bypass RLS). If that key
+      // isn't set, the payment still succeeded — the order stays "Pending
+      // payment" for the owner to reconcile — so we still confirm to the buyer.
       const db = adminDb();
       if (db) await db.from('orders').update({ status: 'Paid' }).eq('ref', ref);
       return redirect(`/account?paid=1&order=${ref}`);
